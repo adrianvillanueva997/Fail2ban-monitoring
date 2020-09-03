@@ -1,0 +1,506 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "panels": [
+    {
+      "circleMaxSize": "30",
+      "circleMinSize": "1",
+      "colors": [
+        "#73BF69",
+        "#FADE2A",
+        "#FF9830",
+        "#F2495C"
+      ],
+      "datasource": null,
+      "decimals": 0,
+      "esMetric": "Count",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 10,
+        "x": 0,
+        "y": 0
+      },
+      "hideEmpty": false,
+      "hideZero": false,
+      "id": 2,
+      "initialZoom": 1,
+      "locationData": "table",
+      "mapCenter": "(0°, 0°)",
+      "mapCenterLatitude": 0,
+      "mapCenterLongitude": 0,
+      "maxDataPoints": 1,
+      "mouseWheelZoom": true,
+      "showLegend": true,
+      "stickyLabels": false,
+      "tableQueryOptions": {
+        "geohashField": "geohash",
+        "labelField": "city",
+        "latitudeField": "lat",
+        "longitudeField": "lng",
+        "metricField": "ciudades",
+        "queryType": "coordinates"
+      },
+      "targets": [
+        {
+          "format": "table",
+          "group": [],
+          "metricColumn": "city",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time AS \"time\",\n  lat,\n  lng,\n  city,\n  count(city) as \"ciudades\",\n  ip as \"metric\"\nFROM ips\nWHERE\n  $__timeFilter(time)\ngroup by city",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "lat"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "lng"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "ips",
+          "timeColumn": "time",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        },
+        {
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time AS \"time\",\n  city,\n  count(city) as \"metrica\"\n  \nFROM Grafana.ips \ngroup by city",
+          "refId": "B",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "thresholds": "2,10,30",
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Ataques por ciudad",
+      "type": "grafana-worldmap-panel",
+      "unitPlural": "",
+      "unitSingle": "",
+      "valueName": "total"
+    },
+    {
+      "circleMaxSize": "30",
+      "circleMinSize": "2",
+      "colors": [
+        "#37872D",
+        "#FFEE52",
+        "#FA6400",
+        "#FF7383",
+        "#C4162A"
+      ],
+      "datasource": null,
+      "decimals": 0,
+      "esMetric": "Count",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 11,
+        "x": 10,
+        "y": 0
+      },
+      "hideEmpty": false,
+      "hideZero": false,
+      "id": 3,
+      "initialZoom": 1,
+      "locationData": "table",
+      "mapCenter": "(0°, 0°)",
+      "mapCenterLatitude": 0,
+      "mapCenterLongitude": 0,
+      "maxDataPoints": 1,
+      "mouseWheelZoom": true,
+      "showLegend": true,
+      "stickyLabels": false,
+      "tableQueryOptions": {
+        "geohashField": "geohash",
+        "labelField": "country",
+        "latitudeField": "lat",
+        "longitudeField": "lng",
+        "metricField": "paises",
+        "queryType": "coordinates"
+      },
+      "targets": [
+        {
+          "format": "table",
+          "group": [],
+          "metricColumn": "city",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time AS \"time\",\n  avg(lat) as \"lat\",\n  avg(lng) as \"lng\",\n  country,\n  count(country) as \"paises\",\n  ip as \"metric\"\nFROM ips\nWHERE\n  $__timeFilter(time)\ngroup by country",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "lat"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "lng"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "ips",
+          "timeColumn": "time",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "thresholds": "2,25,50,100",
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Ataques por pais",
+      "type": "grafana-worldmap-panel",
+      "unitPlural": "",
+      "unitSingle": "",
+      "valueName": "total"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 21,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.1.3",
+      "targets": [
+        {
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "select \ncount(country),time\nfrom ips\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Total IPs",
+      "type": "stat"
+    },
+    {
+      "circleMaxSize": "2",
+      "circleMinSize": "1",
+      "colors": [
+        "#FF9830",
+        "#F2495C"
+      ],
+      "datasource": null,
+      "decimals": 0,
+      "esMetric": "Count",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 10,
+        "x": 0,
+        "y": 13
+      },
+      "hideEmpty": false,
+      "hideZero": false,
+      "id": 4,
+      "initialZoom": 1,
+      "locationData": "table",
+      "mapCenter": "(0°, 0°)",
+      "mapCenterLatitude": 0,
+      "mapCenterLongitude": 0,
+      "maxDataPoints": 1,
+      "mouseWheelZoom": true,
+      "showLegend": true,
+      "stickyLabels": false,
+      "tableQueryOptions": {
+        "geohashField": "geohash",
+        "labelField": "city",
+        "latitudeField": "lat",
+        "longitudeField": "lng",
+        "metricField": "",
+        "queryType": "coordinates"
+      },
+      "targets": [
+        {
+          "format": "table",
+          "group": [],
+          "metricColumn": "city",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time AS \"time\",\n  lat,\n  lng,\n  city\nFROM ips\nWHERE\n  $__timeFilter(time)",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "lat"
+                ],
+                "type": "column"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "lng"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "ips",
+          "timeColumn": "time",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "thresholds": "2",
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Localización ataque",
+      "type": "grafana-worldmap-panel",
+      "unitPlural": "",
+      "unitSingle": "",
+      "valueName": "total"
+    },
+    {
+      "columns": [],
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 12,
+        "w": 11,
+        "x": 10,
+        "y": 13
+      },
+      "id": 6,
+      "pageSize": null,
+      "showHeader": true,
+      "sort": {
+        "col": 2,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "align": "auto",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "Time",
+          "type": "date"
+        },
+        {
+          "alias": "",
+          "align": "right",
+          "colorMode": "value",
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [
+            "2",
+            "15"
+          ],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  isp,\n  country,\n  count(isp) as \"isp_count\"\nFROM Grafana.ips\ngroup by country,isp\norder by isp_count desc",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "ISPs",
+      "transform": "table",
+      "type": "table-old"
+    }
+  ],
+  "refresh": "1s",
+  "schemaVersion": 26,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "fail2ban - xiao",
+  "uid": "F0EdoLCZk",
+  "version": 17
+}
