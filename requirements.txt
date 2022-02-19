@@ -1,9 +1,0 @@
-certifi==2020.4.5.1
-chardet==3.0.4
-idna==2.9
-mysqlclient==1.4.6
-pkg-resources==0.0.0
-python-dotenv==0.12.0
-requests==2.23.0
-SQLAlchemy==1.3.16
-urllib3==1.26.5

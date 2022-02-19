@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "fail2ban-monitoring"
+version = "0.1.0"
+description = ""
+authors = ["adrianvillanueva997"]
+
+[tool.poetry.dependencies]
+python = "3.9"
+requests = "^2.27.1"
+SQLAlchemy = "^1.4.31"
+python-dotenv = "^0.19.2"
+numpy = "^1.22.2"
+mysqlclient = "^2.1.0"
+
+[tool.poetry.dev-dependencies]
+black = "^22.1.0"
+pylama = "^8.3.7"
+pylint = "^2.12.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
