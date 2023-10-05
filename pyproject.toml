@@ -6,7 +6,7 @@ authors = ["adrianvillanueva997"]
 
 [tool.poetry.dependencies]
 python = "3.9"
-requests = "^2.27.1"
+requests = "^2.31.0"
 SQLAlchemy = "^1.4.31"
 python-dotenv = "^0.19.2"
 numpy = "^1.22.2"
