@@ -1,0 +1,86 @@
+name: CI Rust
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  Audit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        architectures:
+          - linux/amd64
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Install audit
+        run: cargo install cargo-audit
+      - uses: Swatinem/rust-cache@v2
+      - uses: extractions/setup-just@v1
+      - name: Run audit
+        run: just audit
+  Clippy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        architectures:
+          - linux/amd64
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - uses: Swatinem/rust-cache@v2
+      - uses: extractions/setup-just@v1
+      - name: Run clippy
+        run: just clippy
+  Tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        architectures:
+          - linux/amd64
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - uses: extractions/setup-just@v1
+      - name: Setup nextest
+        uses: taiki-e/install-action@nextest
+      - uses: Swatinem/rust-cache@v2
+      - name: List tests
+        run: cargo nextest list
+      - name: Run tests
+        run: just test
+  Build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        architectures:
+          - linux/amd64
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - uses: Swatinem/rust-cache@v2
+      - uses: extractions/setup-just@v1
+      - name: Build
+        run: just build
