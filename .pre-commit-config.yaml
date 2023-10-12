@@ -1,3 +1,4 @@
+---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
@@ -60,3 +61,9 @@ repos:
         name: 🛠️ Lint PostgreSQL files
         args: [--dialect, postgres]
         files: "database/postgres"
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.32.0
+    hooks:
+      - id: yamllint
+        name: 💪 Yamllint
