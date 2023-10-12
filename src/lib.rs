@@ -1,7 +1,16 @@
 use clap::Parser;
 
+pub mod database;
 pub mod f2b;
 pub mod logging;
+
+#[derive(Debug)]
+enum DatabaseDriver {
+    Postgres(),
+    Mysql(),
+    Sqlite(),
+}
+
 #[derive(Parser, Debug)]
 #[command(
     name = "fail2ban-monitoring",
