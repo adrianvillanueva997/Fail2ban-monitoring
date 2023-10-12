@@ -1,13 +1,16 @@
 use crate::database::driver::DatabaseDriver;
-
-struct MysqlDriver {}
+#[derive(Default)]
+pub struct MysqlDriver {}
 
 impl DatabaseDriver for MysqlDriver {
     fn connect(&self) {
-        println!("Connecting to MySQL...");
+        println!("Connected to MySQL");
     }
+    fn close(&self) {}
 }
 
 impl MysqlDriver {
-    // add code here
+    pub fn new() -> Self {
+        Self::default()
+    }
 }

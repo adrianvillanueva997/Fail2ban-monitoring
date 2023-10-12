@@ -1,9 +1,16 @@
 use crate::database::driver::DatabaseDriver;
-
-struct SqliteDriver {}
+#[derive(Default)]
+pub struct SqliteDriver {}
 
 impl DatabaseDriver for SqliteDriver {
-    fn connect(&self) {}
+    fn connect(&self) {
+        println!("Connected to MySQL");
+    }
+    fn close(&self) {}
 }
 
-impl SqliteDriver {}
+impl SqliteDriver {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}

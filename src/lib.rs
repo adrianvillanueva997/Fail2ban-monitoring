@@ -1,15 +1,10 @@
 use clap::Parser;
 
+// use crate::database::driver::DatabaseDriver;
+
 pub mod database;
 pub mod f2b;
 pub mod logging;
-
-#[derive(Debug)]
-enum DatabaseDriver {
-    Postgres(),
-    Mysql(),
-    Sqlite(),
-}
 
 #[derive(Parser, Debug)]
 #[command(

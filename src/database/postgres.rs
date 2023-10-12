@@ -1,9 +1,16 @@
 use crate::database::driver::DatabaseDriver;
-
-struct PostgresDriver {}
+#[derive(Default)]
+pub struct PostgresDriver {}
 
 impl DatabaseDriver for PostgresDriver {
-    fn connect(&self) {}
+    fn connect(&self) {
+        println!("Connected to MySQL");
+    }
+    fn close(&self) {}
 }
 
-impl PostgresDriver {}
+impl PostgresDriver {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
