@@ -3,7 +3,7 @@ name: CI Rust
 on:
   pull_request:
     branches:
-      - main
+      - master
 
 jobs:
   Audit:

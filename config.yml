@@ -1,0 +1,5 @@
+config:
+  driver: "postgres"
+  username: "something"
+  password: "something_else"
+  database: "database_name"

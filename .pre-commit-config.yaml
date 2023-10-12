@@ -39,3 +39,24 @@ repos:
       - id: clippy
         name: 🦀 Lint Rust code
         args: [--all-targets, --all-features]
+
+  - repo: https://github.com/sqlfluff/sqlfluff
+    rev: 2.3.2
+    hooks:
+      - id: sqlfluff-fix
+        name: 🛠️ Format MySQL files
+        args: [--dialect, mysql]
+        files: "database/mysql"
+      - id: sqlfluff-lint
+        name: 🛠️ Lint MySQL files
+        args: [--dialect, mysql]
+        files: "database/mysql"
+
+      - id: sqlfluff-fix
+        name: 🛠️ Format PostgreSQL files
+        args: [--dialect, postgres]
+        files: "database/postgres"
+      - id: sqlfluff-lint
+        name: 🛠️ Lint PostgreSQL files
+        args: [--dialect, postgres]
+        files: "database/postgres"
