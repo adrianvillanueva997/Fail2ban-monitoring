@@ -4,3 +4,5 @@ config:
   username: "something"
   password: "something_else"
   database: "database_name"
+  port: 5432
+  host: "localhost"
