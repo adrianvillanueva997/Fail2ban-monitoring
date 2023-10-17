@@ -1,7 +1,6 @@
 use crate::database::driver::DatabaseDriver;
 
 use sqlx::{migrate::MigrateDatabase, query::Query, Row, Sqlite, SqlitePool};
-use std::path::Path;
 use validator::Validate;
 #[derive(Debug, Validate, Default)]
 pub struct SqliteDriver {
@@ -54,6 +53,7 @@ impl SqliteDriver {
             .await
             .unwrap();
         let a: String = result.get(0);
+
         false
     }
     async fn run_migrations(&self) {

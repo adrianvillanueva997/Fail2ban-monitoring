@@ -10,6 +10,4 @@ use clap::{command, Parser};
 pub struct Args {
     #[arg(short, long, default_value = "info")]
     pub logging_environment: String,
-    #[arg(short, long)]
-    pub name: String,
 }

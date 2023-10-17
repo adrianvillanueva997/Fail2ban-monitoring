@@ -1,9 +1,9 @@
 use clap::Parser;
-use fail2banmonitoring::init_logging;
+use fail2banmonitoring::start_procedure;
 
 /// The main function.
 #[tokio::main]
 async fn main() {
     let args = fail2banmonitoring::cli::args::Args::parse();
-    init_logging(args.logging_environment)
+    start_procedure(args.logging_environment)
 }
