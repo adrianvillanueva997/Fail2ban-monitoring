@@ -1,0 +1,78 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-yaml
+        name: ⚙️ Check YAML
+      - id: check-toml
+        name: ⚙️ Check TOML
+      - id: end-of-file-fixer
+        name: ⚙️ End of file fixer
+      - id: trailing-whitespace
+        name: ⚙️ Trailing whitespace remover
+      - id: check-case-conflict
+        name: ⚙️ Check case conflict
+      - id: check-docstring-first
+        name: ⚙️ Check docstring first
+      - id: check-merge-conflict
+        name: ⚙️ Check merge conflict
+      - id: detect-private-key
+        name: ⚙️ Detect private key
+      - id: debug-statements
+        name: "⚙️ Check debug statements"
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.3
+    hooks:
+      - id: prettier
+        name: 🖌️ Format code with Prettier
+        files: \.(json|markdown|md|yaml|yml)$
+        args: [--write]
+
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+      - id: fmt
+        name: 🦀 Format Rust code
+      - id: cargo-check
+        name: 🦀 Check Rust code
+      - id: clippy
+        name: 🦀 Lint Rust code
+        args: [--all-targets, --all-features]
+
+  - repo: https://github.com/sqlfluff/sqlfluff
+    rev: 2.3.2
+    hooks:
+      - id: sqlfluff-fix
+        name: 🛠️ Format MySQL files
+        args: [--dialect, mysql]
+        files: "database/mysql"
+      - id: sqlfluff-lint
+        name: 🛠️ Lint MySQL files
+        args: [--dialect, mysql]
+        files: "database/mysql"
+
+      - id: sqlfluff-fix
+        name: 🛠️ Format PostgreSQL files
+        args: [--dialect, postgres]
+        files: "database/postgres"
+      - id: sqlfluff-lint
+        name: 🛠️ Lint PostgreSQL files
+        args: [--dialect, postgres]
+        files: "database/postgres"
+
+      - id: sqlfluff-fix
+        name: 🛠️ Format SQLite files
+        args: [--dialect, sqlite]
+        files: "database/sqlite"
+      - id: sqlfluff-lint
+        name: 🛠️ Lint SQLite files
+        args: [--dialect, sqlite]
+        files: "database/sqlite"
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.32.0
+    hooks:
+      - id: yamllint
+        name: 💪 Yamllint

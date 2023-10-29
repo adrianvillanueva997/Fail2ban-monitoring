@@ -1,0 +1,18 @@
+---
+name: Rust docker deployment
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  Audit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        architectures:
+          - linux/amd64
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4

@@ -21,12 +21,7 @@
     {
       "circleMaxSize": "30",
       "circleMinSize": "1",
-      "colors": [
-        "#73BF69",
-        "#FADE2A",
-        "#FF9830",
-        "#F2495C"
-      ],
+      "colors": ["#73BF69", "#FADE2A", "#FF9830", "#F2495C"],
       "datasource": null,
       "decimals": 0,
       "esMetric": "Count",
@@ -73,17 +68,13 @@
           "select": [
             [
               {
-                "params": [
-                  "lat"
-                ],
+                "params": ["lat"],
                 "type": "column"
               }
             ],
             [
               {
-                "params": [
-                  "lng"
-                ],
+                "params": ["lng"],
                 "type": "column"
               }
             ]
@@ -109,9 +100,7 @@
           "select": [
             [
               {
-                "params": [
-                  "value"
-                ],
+                "params": ["value"],
                 "type": "column"
               }
             ]
@@ -138,13 +127,7 @@
     {
       "circleMaxSize": "30",
       "circleMinSize": "2",
-      "colors": [
-        "#37872D",
-        "#FFEE52",
-        "#FA6400",
-        "#FF7383",
-        "#C4162A"
-      ],
+      "colors": ["#37872D", "#FFEE52", "#FA6400", "#FF7383", "#C4162A"],
       "datasource": null,
       "decimals": 0,
       "esMetric": "Count",
@@ -191,17 +174,13 @@
           "select": [
             [
               {
-                "params": [
-                  "lat"
-                ],
+                "params": ["lat"],
                 "type": "column"
               }
             ],
             [
               {
-                "params": [
-                  "lng"
-                ],
+                "params": ["lng"],
                 "type": "column"
               }
             ]
@@ -258,9 +237,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "fields": "",
           "values": false
         },
@@ -278,9 +255,7 @@
           "select": [
             [
               {
-                "params": [
-                  "value"
-                ],
+                "params": ["value"],
                 "type": "column"
               }
             ]
@@ -303,10 +278,7 @@
     {
       "circleMaxSize": "2",
       "circleMinSize": "1",
-      "colors": [
-        "#FF9830",
-        "#F2495C"
-      ],
+      "colors": ["#FF9830", "#F2495C"],
       "datasource": null,
       "decimals": 0,
       "esMetric": "Count",
@@ -353,17 +325,13 @@
           "select": [
             [
               {
-                "params": [
-                  "lat"
-                ],
+                "params": ["lat"],
                 "type": "column"
               }
             ],
             [
               {
-                "params": [
-                  "lng"
-                ],
+                "params": ["lng"],
                 "type": "column"
               }
             ]
@@ -431,10 +399,7 @@
           ],
           "decimals": 2,
           "pattern": "/.*/",
-          "thresholds": [
-            "2",
-            "15"
-          ],
+          "thresholds": ["2", "15"],
           "type": "number",
           "unit": "short"
         }
@@ -450,9 +415,7 @@
           "select": [
             [
               {
-                "params": [
-                  "value"
-                ],
+                "params": ["value"],
                 "type": "column"
               }
             ]
