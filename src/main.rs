@@ -5,5 +5,5 @@ use fail2banmonitoring::start_procedure;
 #[tokio::main]
 async fn main() {
     let args = fail2banmonitoring::cli::args::Args::parse();
-    start_procedure(args.logging_environment)
+    start_procedure(args.logging_environment).await;
 }

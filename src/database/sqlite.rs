@@ -1,31 +1,35 @@
-use crate::database::driver::DatabaseDriver;
+use crate::{config::configuration::Config, database::driver::DatabaseDriver};
 
-use sqlx::{migrate::MigrateDatabase, query::Query, Row, Sqlite, SqlitePool};
+use sqlx::{migrate::MigrateDatabase, query::Query, Sqlite, SqlitePool};
 use validator::Validate;
 #[derive(Debug, Validate, Default)]
 pub struct SqliteDriver {
     pub database_name: String,
     pub database_url: String,
     pub connection_pool: Option<sqlx::Pool<sqlx::Sqlite>>,
-    // config: *const Config,
 }
 
 pub struct Test {}
 
 impl DatabaseDriver for SqliteDriver {
     fn connect(&self) {
-        println!("Connected to MySQL");
+        println!("Connected to SQLite database.");
     }
     fn close(&self) {}
 }
 
 impl SqliteDriver {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(config: Config) -> Self {
+        Self {
+            database_name: config.database,
+            database_url: config.host,
+            connection_pool: None,
+        }
+        // Self::default()
     }
 
     /// Create a SQLite database.
-    async fn create_sqlite_database(&self) {
+    async fn create_database(&self) {
         match Sqlite::database_exists(&self.database_url).await {
             Ok(_) => {
                 log::info!("SQLite database already exists: {}", &self.database_name);
@@ -46,13 +50,22 @@ impl SqliteDriver {
     async fn table_exists(&self) -> bool {
         let query: Query<sqlx::Sqlite, _> = sqlx::query(
             "-- sql
-        SELECT name from sqlite_master where name='fail2banmonitoring' and type='table';",
+            SELECT name from sqlite_master where name='fail2banmonitoring' and type='table';",
         );
         let result = query
             .fetch_one(self.connection_pool.as_ref().unwrap())
-            .await
-            .unwrap();
-        let a: String = result.get(0);
+            .await;
+        match result {
+            Ok(_) => {
+                log::info!("SQLite table already exists.");
+                return true;
+            }
+            Err(e) => {
+                log::error!("SQLite table does not exist: {}", e);
+            }
+        }
+
+        // TODO: Check if table exists.
 
         false
     }
@@ -77,5 +90,11 @@ impl SqliteDriver {
                 panic!("SQLite connection pool creation failed: {}", e)
             }
         }
+    }
+
+    pub async fn initialize(&mut self) {
+        self.create_database().await;
+        self.create_connection_pool().await;
+        self.run_migrations().await;
     }
 }

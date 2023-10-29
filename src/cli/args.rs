@@ -10,4 +10,6 @@ use clap::{command, Parser};
 pub struct Args {
     #[arg(short, long, default_value = "info")]
     pub logging_environment: String,
+    #[arg(short, long, default_value = "config.yml")]
+    pub configuration_file: String,
 }

@@ -1,10 +1,8 @@
 set dotenv-load
 set export
-DOCKER_IMAGE_NAME := "telegrambot_deficiente"
+DOCKER_IMAGE_NAME := "fail2ban-monitoring-rs"
 
-# dev:
-#     @echo "Running the app"
-#     cargo run
+
 test:
     @echo "Running tests"
     cargo nextest run
@@ -32,3 +30,8 @@ hadolint:
 docker-build:
     @echo "Building the docker image"
     docker build -t $(DOCKER_IMAGE_NAME) .
+
+sqlite-run:
+    @echo "Running the sqlite database"
+    rm sqlite.db
+    cargo run

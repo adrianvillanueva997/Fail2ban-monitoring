@@ -1,6 +1,9 @@
 // use crate::database::driver::DatabaseDriver;
 
 use config::configuration::Config;
+use validator::Validate;
+
+use crate::database::sqlite;
 
 pub mod cli;
 pub mod config;
@@ -20,8 +23,19 @@ fn parse_configuration() -> Config {
     config::configuration::Config::new().read_configuration()
 }
 
-pub fn start_procedure(logging_environment: String) {
+pub async fn start_procedure(logging_environment: String) {
     init_logging(logging_environment);
     let config = parse_configuration();
     log::debug!("Configuration: {:?}", config);
+    match config.validate() {
+        Ok(_) => {
+            log::info!("Configuration is valid");
+        }
+        Err(e) => {
+            log::error!("Configuration is invalid: {}", e);
+            std::process::exit(1);
+        }
+    }
+    println!("Configuration: {:?}", config);
+    sqlite::SqliteDriver::new(config).initialize().await;
 }
