@@ -13,7 +13,7 @@ numpy = "^1.22.2"
 mysqlclient = "^2.1.0"
 
 [tool.poetry.dev-dependencies]
-black = "^22.1.0"
+black = "^24.3.0"
 pylama = "^8.3.7"
 pylint = "^2.12.2"
 
