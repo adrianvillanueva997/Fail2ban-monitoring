@@ -10,7 +10,7 @@ from pydantic import AliasPath, BaseModel, Field
 logger = logging.getLogger(__name__)
 
 
-class _IPAPIRULS(Enum):
+class _IPAPIRules(Enum):
     # Unfortunately these endpoints are not HTTPS
     batch = "http://ip-api.com/batch"
     single = "http://ip-api.com/json"
@@ -89,7 +89,7 @@ class IPMetadata(BaseModel):
                     len(_batch),
                 )
                 async with session.post(
-                    _IPAPIRULS.batch.value,
+                    _IPAPIRules.batch.value,
                     json=_batch,
                 ) as response:
                     if response.status != 200:
@@ -145,7 +145,7 @@ class IPMetadata(BaseModel):
 
         """
         try:
-            async with session.get(f"{_IPAPIRULS.single.value}/{ip}") as _response:
+            async with session.get(f"{_IPAPIRules.single.value}/{ip}") as _response:
                 if _response.status != 200:
                     msg = f"Single IP request failed with status {_response.status}"
                     logger.error(msg)
