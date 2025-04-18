@@ -1,10 +1,13 @@
 import asyncio
+import logging
 from enum import Enum
 from itertools import batched
 from typing import Self
 
 import aiohttp
 from pydantic import AliasPath, BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 
 class _IPAPIRULS(Enum):
@@ -73,32 +76,49 @@ class IPMetadata(BaseModel):
             pydantic.ValidationError: If the API response cannot be parsed into IPMetadata.
 
         """
+        logger.info("Fetching batch metadata...")
         ips_metadata: list[Self] = []
         for _request_count, _batch in enumerate(batched(ips, 100), start=1):
             if _request_count % 45 == 0:
+                logger.warning("Rate limit reached, sleeping for 60 seconds...")
                 await asyncio.sleep(60)
             try:
+                logger.debug(
+                    "Sending batch request #%d with %d IPs",
+                    _request_count,
+                    len(_batch),
+                )
                 async with session.post(
                     _IPAPIRULS.batch.value,
                     json=_batch,
                 ) as response:
                     if response.status != 200:
                         msg = f"Batch request failed with status {response.status}"
+                        logger.error(msg)
                         raise aiohttp.ClientError(msg)  # noqa: TRY301
                     try:
                         batch_json = await response.json()
+                        logger.debug("Received batch response: %s", batch_json)
                     except Exception as e:
                         msg = f"Failed to decode JSON: {e}"
+                        logger.exception(msg)
                         raise ValueError(msg)
                     try:
                         ips_metadata.extend(
                             [cls(**_response) for _response in batch_json],
                         )
+                        logger.info(
+                            "Successfully parsed %d IPs in batch #%d",
+                            len(batch_json),
+                            _request_count,
+                        )
                     except Exception as e:
                         msg = f"Pydantic validation failed: {e}"
+                        logger.exception(msg)
                         raise ValueError(msg)
             except aiohttp.ClientError as e:
                 msg = f"HTTP error during batch request: {e}"
+                logger.exception(msg)
                 raise aiohttp.ClientError(msg)
         return ips_metadata
 
@@ -128,17 +148,25 @@ class IPMetadata(BaseModel):
             async with session.get(f"{_IPAPIRULS.single.value}/{ip}") as _response:
                 if _response.status != 200:
                     msg = f"Single IP request failed with status {_response.status}"
+                    logger.error(msg)
                     raise aiohttp.ClientError(msg)  # noqa: TRY301
                 try:
                     json_response = await _response.json()
+                    logger.debug("Received single IP response: %s", json_response)
                 except Exception as e:
                     msg = f"Failed to decode JSON: {e}"
+                    logger.exception(msg)
                     raise ValueError(msg)
                 try:
-                    return cls(**json_response)
+                    result = cls(**json_response)
                 except Exception as e:
                     msg = f"Pydantic validation failed: {e}"
+                    logger.exception(msg)
                     raise ValueError(msg)
+                else:
+                    logger.info("Successfully parsed metadata for IP %s", ip)
+                    return result
         except aiohttp.ClientError as e:
             msg = f"HTTP error during single IP request: {e}"
+            logger.exception(msg)
             raise aiohttp.ClientError(msg)
