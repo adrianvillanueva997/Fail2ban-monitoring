@@ -1,9 +1,14 @@
+import logging
 from dataclasses import dataclass
 from functools import cached_property
 
-from sqlalchemy import URL
+from sqlalchemy import URL, text
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -69,3 +74,15 @@ class SqlEngine:
             pool_size=self.pool_size,
             max_overflow=self.max_overflow,
         )
+
+    @retry(
+        reraise=True,
+        stop=stop_after_attempt(5),
+        wait=wait_fixed(3),
+        retry=retry_if_exception_type(OperationalError),
+    )
+    async def ping(self) -> None:
+        """Test the connection to the database with retries."""
+        async with self.engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        logger.debug("Database connection successful.")
