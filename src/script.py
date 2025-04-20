@@ -54,8 +54,8 @@ def get_ip_metadata(
             f"http://ip-api.com/json/{ip}",
         )  # This endpoint is limited to 45 requests per minute
 
-    except Exception:
-        pass
+    except Exception as e:
+        logging.exception("An error occurred while retrieving IP metadata for %s", ip)
     if request is None:
         return None
     data = request.json()
