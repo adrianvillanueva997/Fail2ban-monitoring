@@ -65,7 +65,7 @@ class IpModel(_Base):
     zip: Mapped[str] = mapped_column(String(30))
     lat: Mapped[float] = mapped_column(Double)
     lon: Mapped[float] = mapped_column(Double)
-    timezone: Mapped[str] = mapped_column(DateTime())
+    timezone: Mapped[datetime] = mapped_column(DateTime())
     isp: Mapped[str] = mapped_column(String(50))
     org: MappedColumn[str] = mapped_column(String(50))
     _as: Mapped[str] = mapped_column(String(50), name="as")
