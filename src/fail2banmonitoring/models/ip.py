@@ -1,7 +1,7 @@
 import logging
-from datetime import datetime
+from typing import Self
 
-from sqlalchemy import DateTime, Double, String
+from sqlalchemy import Double, String
 from sqlalchemy.exc import DBAPIError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
@@ -41,7 +41,7 @@ class IpModel(_Base):
         The latitude of the IP address.
     lon : float
         The longitude of the IP address.
-    timezone : datetime
+    timezone : str
         The timezone of the IP address.
     isp : str
         The ISP of the IP address.
@@ -66,21 +66,28 @@ class IpModel(_Base):
     zip: Mapped[str] = mapped_column(String(30))
     lat: Mapped[float] = mapped_column(Double)
     lon: Mapped[float] = mapped_column(Double)
-    timezone: Mapped[datetime] = mapped_column(DateTime())
+    timezone: Mapped[str] = mapped_column(String(50))
     isp: Mapped[str] = mapped_column(String(50))
     org: MappedColumn[str] = mapped_column(String(50))
     _as: Mapped[str] = mapped_column(String(50), name="as")
 
-    def __init__(self, engine: SqlEngine) -> None:
-        """Initialize the IpModel with a given SQL engine.
-
-        Parameters
-        ----------
-        engine : SqlEngine
-            The SQL engine to be used for database operations.
-
-        """
-        self.sql_engine = engine
+    @classmethod
+    def from_metadata(cls, ip_metadata: IPMetadata) -> Self:
+        """Create an IpModel instance from an IPMetadata object."""
+        return cls(
+            country=ip_metadata.country,
+            country_code=ip_metadata.country_code,
+            region=ip_metadata.region,
+            region_name=ip_metadata.region_name,
+            city=ip_metadata.city,
+            zip=ip_metadata.zip,
+            lat=ip_metadata.lat,
+            lon=ip_metadata.lon,
+            timezone=ip_metadata.timezone,
+            isp=ip_metadata.isp,
+            org=ip_metadata.org,
+            _as=ip_metadata.as_,
+        )
 
     @retry(
         reraise=True,
@@ -92,7 +99,7 @@ class IpModel(_Base):
         ),
         retry=retry_if_exception_type((OperationalError, DBAPIError)),
     )
-    async def insert(self, ips: list[IPMetadata]) -> None:
+    async def insert(self, ips: list[IPMetadata], sql_engine: SqlEngine) -> None:
         """Insert a list of IPMetadata objects into the database.
 
         Parameters
@@ -101,9 +108,10 @@ class IpModel(_Base):
             The list of IPMetadata objects to be inserted.
 
         """
-        async with AsyncSession(self.sql_engine.engine) as session, session.begin():
+        ip_models = [IpModel.from_metadata(ip) for ip in ips]
+        async with AsyncSession(sql_engine.engine) as session, session.begin():
             try:
-                session.add_all(ips)
+                session.add_all(ip_models)
                 logger.debug("Inserted %d IP records into the database.", len(ips))
             except Exception:
                 logger.exception("Exception occurred during IP insertion.")
