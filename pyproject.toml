@@ -6,8 +6,6 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "aiohttp[speedups]>=3.11.16",
-    "aiomysql>=0.2.0",
-    "asyncpg>=0.30.0",
     "pydantic>=2.11.3",
     "sqlalchemy[asyncio]>=2.0.40",
     "tenacity>=9.1.2",
@@ -19,3 +17,8 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = ["bandit>=1.8.3", "mypy>=1.15.0", "ruff>=0.11.5"]
+
+[project.optional-dependencies]
+postgres = ["asyncpg>=0.30.0"]
+mysql = ["aiomysql>=0.2.0"]
+sqlite = ["aiosqlite>=0.21.0"]
