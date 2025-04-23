@@ -106,6 +106,8 @@ class IpModel(_Base):
         ----------
         ips : list[IPMetadata]
             The list of IPMetadata objects to be inserted.
+        sql_engine : SqlEngine
+            The SQLAlchemy engine instance used for database operations.
 
         """
         ip_models = [IpModel.from_metadata(ip) for ip in ips]
