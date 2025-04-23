@@ -116,5 +116,6 @@ class IpModel(_Base):
                 session.add_all(ip_models)
                 logger.debug("Inserted %d IP records into the database.", len(ips))
             except Exception:
+                await session.rollback()
                 logger.exception("Exception occurred during IP insertion.")
                 raise

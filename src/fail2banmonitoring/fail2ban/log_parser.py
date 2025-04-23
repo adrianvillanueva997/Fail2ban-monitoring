@@ -20,9 +20,9 @@ class Fail2BanLogParser:
         self.log_path = Path(log_path)
         self.output_filename = None if output_file is None else Path(output_file)
         self.today = datetime.now(UTC).strftime("%Y-%m-%d")
-        self._ips: set[str] = set()
+        self._ips: list[str] = []
 
-    def read_logs(self) -> set[str]:
+    def read_logs(self) -> list[str]:
         """Read the Fail2Ban log file and extract banned IP addresses for today.
 
         Returns:
@@ -35,16 +35,16 @@ class Fail2BanLogParser:
         if not self.log_path.exists():
             msg = "File: %s does not exist", self.log_path.as_posix()
             raise FileNotFoundError(msg)
-        self._ips.clear()  # To avoid overlapping of IPs the set is cleared before putting in the new IPs
+        self._ips.clear()  # To avoid overlapping of IPs the list is cleared before putting in the new IPs. This script is intended to be run once a day.
         with Path(self.log_path).open("r") as file:
             for line in file:
                 if "Ban " in line and self.today in line:
                     ip = line.strip().split()[-1]
-                    self._ips.add(ip)
+                    self._ips.append(ip)
         return self._ips
 
     @property
-    def ips(self) -> set[str]:
+    def ips(self) -> list[str]:
         """Get the set of banned IP addresses extracted from the log file."""
         return self._ips
 
