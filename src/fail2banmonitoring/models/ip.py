@@ -99,7 +99,8 @@ class IpModel(_Base):
         ),
         retry=retry_if_exception_type((OperationalError, DBAPIError)),
     )
-    async def insert(self, ips: list[IPMetadata], sql_engine: SqlEngine) -> None:
+    @staticmethod
+    async def insert(ips: list[IPMetadata], sql_engine: SqlEngine) -> None:
         """Insert a list of IPMetadata objects into the database.
 
         Parameters
