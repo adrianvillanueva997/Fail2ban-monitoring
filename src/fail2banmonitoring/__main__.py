@@ -45,6 +45,7 @@ async def main() -> None:
                 enriched_ips,
                 SqlEngine(
                     SqlConnectorConfig(
+                        # Type ignored because it is already checked on the constructor level of thie environment_variables class
                         drivername=environment_variables.driver,  # type: ignore
                         username=environment_variables.username,  # type: ignore
                         password=environment_variables.password,  # type: ignore

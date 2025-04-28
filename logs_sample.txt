@@ -1,0 +1,9 @@
+Jan 15 10:26:01 server fail2ban.actions [1]: NOTICE [sshd] Ban 192.168.1.100
+Jan 15 10:26:05 server fail2ban.actions [1]: NOTICE [apache-badbots] Ban 203.0.113.42
+Jan 15 10:26:08 server fail2ban.actions [1]: NOTICE [nginx-http-auth] Ban 198.51.100.75
+Jan 15 10:30:01 server fail2ban.actions [1]: NOTICE [sshd] Unban 192.168.1.100
+Feb 20 14:05:33 firewall fail2ban.actions [1122]: NOTICE [sshd] Ban 185.143.223.67
+Feb 20 14:07:12 firewall fail2ban.actions [1122]: NOTICE [sshd] Ban 91.234.111.222
+Feb 20 14:08:45 firewall fail2ban.actions [1122]: NOTICE [sshd] Ban 45.33.18.196
+Feb 20 14:15:00 firewall fail2ban.actions [1122]: NOTICE [sshd] Unban 185.143.223.67
+Feb 20 14:30:22 firewall fail2ban.actions [1122]: NOTICE [sshd] Ban 62.210.180.123

@@ -10,7 +10,7 @@ class _EnvVar(Enum):
     username = ("USERNAME", True)  # Database username
     password = ("PASSWORD", True)
     database = ("DATABASE", True)  # Database name
-    log_path = ("LOG_PATH", True)  # Logs to parse
+    log_path = ("LOG_PATH", False)  # Logs to parse
     export_ip_path = ("EXPORT_IP_PATH", False)  # Export fetched ips location
 
 
@@ -41,10 +41,10 @@ class _EnvMeta(type):
 class EnvironmentVariables(metaclass=_EnvMeta):
     """Access environment variables as properties, with validation for required ones."""
 
-    driver: str | None
-    host: str | None
-    username: str | None
-    password: str | None
-    database: str | None
+    driver: str
+    host: str
+    username: str
+    password: str
+    database: str
     log_path: str | None
     export_ip_path: str | None

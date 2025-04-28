@@ -7,7 +7,7 @@ class Fail2BanLogParser:
 
     def __init__(
         self,
-        log_path: str = "/var/log/fail2ban.log",
+        log_path: str,
         output_file: None | str = None,
     ) -> None:
         """Initialize the Fail2BanLogParser.
