@@ -31,7 +31,7 @@ jobs:
       - name: Run tests
         run: |
           uv sync --extra ${{ matrix.db }}
-          pytest ${{matrix.test_file}}
+          uv run pytest ${{matrix.test_file}}
 
 
 
