@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class SqlConnectorConfig:
+
     """Dataclass to manage SqlAlchemy connector configurations."""
 
     drivername: str
@@ -56,6 +57,7 @@ class SqlConnectorConfig:
 
 @dataclass
 class SqlEngine:
+
     """Class to manage the creation of an asynchronous SQLAlchemy engine using the provided connector configuration."""
 
     url_config: SqlConnectorConfig

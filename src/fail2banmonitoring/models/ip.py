@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class IpModel(_Base):
+
     """Represents an IP address entry in the database with associated metadata.
 
     Attributes

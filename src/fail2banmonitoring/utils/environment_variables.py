@@ -39,6 +39,7 @@ class _EnvMeta(type):
 # My IDE was not smart enough to detect the attributes being dynamically created, so i made an interface on top of it.
 # Sadly I have to duplicate the enum values here for typing purposes
 class EnvironmentVariables(metaclass=_EnvMeta):
+
     """Access environment variables as properties, with validation for required ones."""
 
     driver: str

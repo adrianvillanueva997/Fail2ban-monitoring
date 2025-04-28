@@ -3,6 +3,7 @@ from pathlib import Path
 
 
 class Fail2BanLogParser:
+
     """Parser for Fail2Ban log files to extract banned IP addresses."""
 
     def __init__(
