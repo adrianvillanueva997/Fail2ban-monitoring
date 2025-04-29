@@ -1,4 +1,5 @@
-import os  # noqa: INP001
+import asyncio
+import os
 from pathlib import Path
 
 import aiohttp
@@ -19,9 +20,9 @@ def set_env_vars(mysql: MySqlContainer, tmp_path: Path) -> None:
     os.environ["DRIVER"] = "mysql+aiomysql"
     os.environ["HOST"] = mysql.get_container_host_ip()
     os.environ["PORT"] = str(mysql.get_exposed_port(3306))
-    os.environ["USERNAME"] = mysql.username
-    os.environ["PASSWORD"] = mysql.password
-    os.environ["DATABASE"] = mysql.dbname
+    os.environ["USERNAME"] = "test"
+    os.environ["PASSWORD"] = "test"  # noqa: S105
+    os.environ["DATABASE"] = "dbname"
     os.environ["LOG_PATH"] = str(tmp_path / "fail2ban.log")
     os.environ["EXPORT_IP_PATH"] = str(tmp_path / "banned.txt")
 
@@ -50,6 +51,7 @@ async def test_end_to_end_mysql(tmp_path) -> None:
         password="test",  # noqa: S106
         dbname="testdb",
     ) as mysql:
+        await asyncio.sleep(5)
         set_env_vars(mysql, tmp_path)
         log_path = os.environ["LOG_PATH"]
         await prepare_fake_log(log_path)
