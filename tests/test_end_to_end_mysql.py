@@ -63,12 +63,7 @@ async def test_end_to_end_mysql(tmp_path) -> None:
             msg = "PORT environment variable is not set"
             raise ValueError(msg)
         sql_config = SqlConnectorConfig(
-            drivername=environment_variables.driver,
-            username=environment_variables.username,
-            password=environment_variables.password,
-            host=environment_variables.host,
-            port=int(environment_variables.port),
-            database=environment_variables.database,
+            predefined_url=mysql.get_connection_url(),
         )
 
         sql_engine = SqlEngine(url_config=sql_config)
@@ -88,20 +83,3 @@ async def test_end_to_end_mysql(tmp_path) -> None:
             )
             row = result.first()
             assert row is not None, "IP was not inserted into the database"
-
-
-# import sqlalchemy
-# from testcontainers.mysql import MySqlContainer
-
-
-# def test_something() -> None:
-#     with MySqlContainer("mysql:5.7.17", dialect="pymysql") as mysql:
-#         engine = sqlalchemy.create_engine(mysql.get_connection_url())
-#         print(mysql.get_connection_url())
-#         print(mysql.username)
-#         print(mysql.password)
-
-#         with engine.begin() as connection:
-#             result = connection.execute(sqlalchemy.text("select version()"))
-
-#             (version,) = result.fetchone()  # type: ignore

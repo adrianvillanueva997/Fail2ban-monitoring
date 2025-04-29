@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 from functools import cached_property
 
-from sqlalchemy import URL, text
+from sqlalchemy import URL, make_url, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
@@ -15,16 +15,19 @@ logger = logging.getLogger(__name__)
 class SqlConnectorConfig:
     """Dataclass to manage SqlAlchemy connector configurations."""
 
-    drivername: str
-    database: str
+    drivername: str | None = None
+    database: str | None = None
     username: str | None = None
     password: str | None = None
     host: str | None = None
     port: int | None = None
+    predefined_url: str | None = None
 
     @cached_property
     def url(self) -> URL:
         """Return a SQLAlchemy URL object using the connector configuration."""
+        if self.predefined_url is not None:
+            return make_url(self.predefined_url)
         if self.drivername == "sqlite+aiosqlite":
             # Special handling for SQLite connection URLs
             return URL.create(
@@ -32,12 +35,21 @@ class SqlConnectorConfig:
                 database=self.database,
             )
         # For other database types, all parameters are required
-        if not all([self.username, self.password, self.host, self.port]):
+        if not all(
+            [
+                self.username,
+                self.password,
+                self.host,
+                self.port,
+                self.drivername,
+                self.database,
+            ],
+        ):
             msg = f"Username, password, and host are required for {self.drivername}"
             raise ValueError(msg)
 
         return URL.create(
-            drivername=self.drivername,
+            drivername=self.drivername,  # type: ignore
             username=self.username,
             password=self.password,
             host=self.host,
