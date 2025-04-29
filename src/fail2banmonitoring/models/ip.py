@@ -88,7 +88,7 @@ class IpModel(_Base):
             timezone=ip_metadata.timezone,
             isp=ip_metadata.isp,
             org=ip_metadata.org,
-            _as=ip_metadata.as_,
+            _as=ip_metadata.as_value,
         )
 
     @classmethod
