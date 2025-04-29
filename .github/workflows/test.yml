@@ -14,7 +14,7 @@ jobs:
       matrix:
         include:
           - db: postgres
-            test_file: tests/test_end_to_end.py
+            test_file: tests/test_end_to_end_postgres.py
           - db: mysql
             test_file: tests/test_end_to_end_mysql.py
           - db: sqlite
