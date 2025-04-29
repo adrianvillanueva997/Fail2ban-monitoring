@@ -75,7 +75,7 @@ class IpModel(_Base):
     isp: Mapped[str | None] = mapped_column(sa.String(50))
     org: Mapped[str | None] = mapped_column(sa.String(50))
     as_field: Mapped[str | None] = mapped_column("as", sa.String(50), nullable=True)
-    ip_address: Mapped[str | None] = mapped_column(sa.String(50), name="query")
+    ip_address: Mapped[str | None] = mapped_column(sa.String(50), name="ip_address")
     created_at: Mapped[datetime] = mapped_column(
         sa.DateTime,
         server_default=sa.func.now(),
@@ -151,7 +151,7 @@ class IpModel(_Base):
             ip_models = [IpModel.from_metadata(ip) for ip in ips]
 
             try:
-                engine = sql_engine.engine.engine
+                engine = sql_engine.engine
             except Exception as e:
                 logger.exception("Failed to initialize database engine: %s")
                 msg = f"Database engine initialization failed: {e!s}"
