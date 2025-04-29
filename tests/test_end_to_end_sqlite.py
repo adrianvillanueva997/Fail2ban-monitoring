@@ -34,7 +34,6 @@ async def test_end_to_end_sqlite(tmp_path: pathlib.Path) -> None:
         await f.write(
             "2024-06-01 12:00:00,000 fail2ban.actions        [1234]: NOTICE  [sshd] Ban 8.8.8.8\n",
         )
-        await f.flush()
 
     # Verify log file was created properly
     assert os.path.exists(log_path), f"Log file not created at {log_path}"
@@ -55,8 +54,8 @@ async def test_end_to_end_sqlite(tmp_path: pathlib.Path) -> None:
     # Run the main workflow
     environment_variables = EnvironmentVariables()
     parser = Fail2BanLogParser(
-        log_path=environment_variables.log_path,
-        output_file=environment_variables.export_ip_path,
+        log_path=environment_variables.log_path or "",
+        output_file=environment_variables.export_ip_path or "",
     )
     ips = parser.read_logs()
     assert "8.8.8.8" in ips, f"Expected IP 8.8.8.8 not found in parsed IPs: {ips}"

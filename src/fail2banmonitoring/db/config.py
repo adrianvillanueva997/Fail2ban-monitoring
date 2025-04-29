@@ -41,7 +41,6 @@ class SqlConnectorConfig:
             username=self.username,
             password=self.password,
             host=self.host,
-            port=self.port,
             database=self.database,
         )
 
@@ -56,7 +55,6 @@ class SqlConnectorConfig:
             "postgresql+asyncpg",
             "mysql+aiomysql",
             "mysql+asyncmy",
-            "sqlite+aiosqlite",  # Added SQLite with aiosqlite support
         }
         if self.drivername not in valid_async_drivers:
             msg = (
