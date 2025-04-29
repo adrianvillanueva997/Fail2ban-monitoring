@@ -1,4 +1,3 @@
-import asyncio
 import os
 from pathlib import Path
 
@@ -7,7 +6,6 @@ import anyio
 import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from testcontainers.mysql import MySqlContainer
 
 from fail2banmonitoring.db.config import SqlConnectorConfig, SqlEngine
 from fail2banmonitoring.fail2ban.log_parser import Fail2BanLogParser
@@ -16,13 +14,13 @@ from fail2banmonitoring.services.ip import IPMetadata
 from fail2banmonitoring.utils.environment_variables import EnvironmentVariables
 
 
-def set_env_vars(mysql: MySqlContainer, tmp_path: Path) -> None:
+def set_env_vars(tmp_path: Path) -> None:
     os.environ["DRIVER"] = "mysql+aiomysql"
-    os.environ["HOST"] = "localhost"
-    os.environ["PORT"] = str(mysql.port)
-    os.environ["USERNAME"] = mysql.username
-    os.environ["PASSWORD"] = mysql.password
-    os.environ["DATABASE"] = mysql.dbname
+    os.environ["HOST"] = "127.0.0.1"
+    os.environ["PORT"] = "3306"
+    os.environ["USERNAME"] = "test"
+    os.environ["PASSWORD"] = "test"
+    os.environ["DATABASE"] = "test"
     os.environ["LOG_PATH"] = str(tmp_path / "fail2ban.log")
     os.environ["EXPORT_IP_PATH"] = str(tmp_path / "banned.txt")
 
@@ -44,42 +42,45 @@ def prepare_fake_log(log_path: str):
 
 @pytest.mark.asyncio
 async def test_end_to_end_mysql(tmp_path) -> None:
-    with MySqlContainer("mysql:5.7", dialect="aiomysql") as mysql:
-        await asyncio.sleep(5)
-        set_env_vars(mysql, tmp_path)
-        log_path = os.environ["LOG_PATH"]
-        await prepare_fake_log(log_path)
+    set_env_vars(tmp_path)
+    log_path = os.environ["LOG_PATH"]
+    await prepare_fake_log(log_path)
 
-        environment_variables = EnvironmentVariables()
-        if environment_variables.log_path is None:
-            msg = "LOG_PATH environment variable is not set"
-            raise ValueError(msg)
-        parser = Fail2BanLogParser(
-            log_path=environment_variables.log_path,
-            output_file=environment_variables.export_ip_path,
+    environment_variables = EnvironmentVariables()
+    if environment_variables.log_path is None:
+        msg = "LOG_PATH environment variable is not set"
+        raise ValueError(msg)
+    parser = Fail2BanLogParser(
+        log_path=environment_variables.log_path,
+        output_file=environment_variables.export_ip_path,
+    )
+    # Create tables
+    if environment_variables.port is None:
+        msg = "PORT environment variable is not set"
+        raise ValueError(msg)
+    sql_config = SqlConnectorConfig(
+        drivername=environment_variables.driver,
+        username=environment_variables.username,
+        password=environment_variables.password,
+        host=environment_variables.host,
+        port=int(environment_variables.port),
+        database=environment_variables.database,
+    )
+
+    sql_engine = SqlEngine(url_config=sql_config)
+    await IpModel.create_table(sql_engine)
+
+    ips = parser.read_logs()
+    assert "8.8.8.8" in ips  # noqa: S101
+
+    async with aiohttp.ClientSession() as session:
+        enriched = await IPMetadata.get_ips_metadata_batch(list(ips), session)
+
+    await IpModel.insert(enriched, sql_engine)
+
+    async with AsyncSession(sql_engine.engine.engine) as session:
+        result = await session.execute(
+            text("SELECT ip_address FROM ip WHERE ip_address = '8.8.8.8'"),
         )
-        # Create tables
-        if environment_variables.port is None:
-            msg = "PORT environment variable is not set"
-            raise ValueError(msg)
-        sql_config = SqlConnectorConfig(
-            predefined_url=mysql.get_connection_url(),
-        )
-
-        sql_engine = SqlEngine(url_config=sql_config)
-        await IpModel.create_table(sql_engine)
-
-        ips = parser.read_logs()
-        assert "8.8.8.8" in ips
-
-        async with aiohttp.ClientSession() as session:
-            enriched = await IPMetadata.get_ips_metadata_batch(list(ips), session)
-
-        await IpModel.insert(enriched, sql_engine)
-
-        async with AsyncSession(sql_engine.engine.engine) as session:
-            result = await session.execute(
-                text("SELECT ip_address FROM ip WHERE ip_address = '8.8.8.8'"),
-            )
-            row = result.first()
-            assert row is not None, "IP was not inserted into the database"
+        row = result.first()
+        assert row is not None, "IP was not inserted into the database"  # noqa: S101
