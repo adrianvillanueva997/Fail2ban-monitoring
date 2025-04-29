@@ -18,7 +18,7 @@ from fail2banmonitoring.utils.environment_variables import EnvironmentVariables
 
 def set_env_vars(mysql, tmp_path) -> None:
     os.environ["DRIVER"] = "mysql+aiomysql"
-    os.environ["HOST"] = "127.0.0.1"
+    os.environ["HOST"] = "127.0.0.1:3306"
     os.environ["USERNAME"] = mysql.username
     os.environ["PASSWORD"] = mysql.password
     os.environ["DATABASE"] = mysql.dbname
