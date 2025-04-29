@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class SqlConnectorConfig:
-
     """Dataclass to manage SqlAlchemy connector configurations."""
 
     drivername: str
@@ -21,15 +20,23 @@ class SqlConnectorConfig:
     password: str
     host: str
     database: str
+    port: int | None = None
 
     @cached_property
     def url(self) -> URL:
         """Return a SQLAlchemy URL object using the connector configuration."""
+        if self.drivername == "sqlite+aiosqlite":
+            # Special handling for SQLite connection URLs
+            return URL.create(
+                drivername=self.drivername,
+                database=self.database,
+            )
         return URL.create(
             drivername=self.drivername,
             username=self.username,
             password=self.password,
             host=self.host,
+            port=self.port,
             database=self.database,
         )
 
@@ -44,6 +51,7 @@ class SqlConnectorConfig:
             "postgresql+asyncpg",
             "mysql+aiomysql",
             "mysql+asyncmy",
+            "sqlite+aiosqlite",  # Added SQLite with aiosqlite support
         }
         if self.drivername not in valid_async_drivers:
             msg = (
@@ -57,7 +65,6 @@ class SqlConnectorConfig:
 
 @dataclass
 class SqlEngine:
-
     """Class to manage the creation of an asynchronous SQLAlchemy engine using the provided connector configuration."""
 
     url_config: SqlConnectorConfig

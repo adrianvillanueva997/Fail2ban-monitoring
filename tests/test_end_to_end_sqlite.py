@@ -1,4 +1,5 @@
 import os
+from typing import TYPE_CHECKING
 
 import anyio
 import pytest
@@ -12,10 +13,18 @@ from fail2banmonitoring.models.ip import IpModel
 from fail2banmonitoring.services.ip import IPMetadata
 from fail2banmonitoring.utils.environment_variables import EnvironmentVariables
 
+if TYPE_CHECKING:
+    import pathlib
+
 
 @pytest.mark.asyncio
-async def test_end_to_end_sqlite(tmp_path) -> None:
+async def test_end_to_end_sqlite(tmp_path: "pathlib.Path") -> None:
     """End-to-end test for the SQLite workflow: parses a fake fail2ban log, enriches IPs, inserts them into the database, and verifies insertion."""
+    try:
+        import aiosqlite  # type: ignore # noqa: F401
+    except ImportError:
+        pytest.skip("aiosqlite is not installed, skipping SQLite test")
+
     # Use a temporary SQLite file
     db_path = tmp_path / "test.db"
     db_url = f"sqlite+aiosqlite:///{db_path}"
@@ -28,11 +37,11 @@ async def test_end_to_end_sqlite(tmp_path) -> None:
     os.environ["EXPORT_IP_PATH"] = str(tmp_path / "banned.txt")
 
     # Prepare a fake fail2ban log file
-
     async with await anyio.open_file(os.environ["LOG_PATH"], "w") as f:
         await f.write(
             "2024-06-01 12:00:00,000 fail2ban.actions        [1234]: NOTICE  [sshd] Ban 8.8.8.8\n",
         )
+        await f.flush()
 
     # Create tables
     engine = create_async_engine(db_url, echo=True)
@@ -42,8 +51,8 @@ async def test_end_to_end_sqlite(tmp_path) -> None:
     # Run the main workflow: parse log, enrich, insert
     environment_variables = EnvironmentVariables()
     parser = Fail2BanLogParser(
-        log_path=environment_variables.log_path or "",
-        output_file=environment_variables.export_ip_path or "",
+        log_path=environment_variables.log_path,
+        output_file=environment_variables.export_ip_path,
     )
     ips = parser.read_logs()
     assert "8.8.8.8" in ips  # noqa: S101
@@ -54,19 +63,17 @@ async def test_end_to_end_sqlite(tmp_path) -> None:
     async with aiohttp.ClientSession() as session:
         enriched = await IPMetadata.get_ips_metadata_batch(list(ips), session)
 
-    # Insert into DB
-    await IpModel.insert(
-        enriched,
-        SqlEngine(
-            SqlConnectorConfig(
-                drivername=environment_variables.driver,  # type: ignore
-                username=environment_variables.username,  # type: ignore
-                password=environment_variables.password,  # type: ignore
-                host=environment_variables.host,  # type: ignore
-                database=environment_variables.database,  # type: ignore
-            ),
-        ),
+    # Insert into DB using SqlEngine with SQLite+aiosqlite support
+    sql_config = SqlConnectorConfig(
+        drivername=environment_variables.driver,
+        username=environment_variables.username,
+        password=environment_variables.password,
+        host=environment_variables.host,
+        database=environment_variables.database,
     )
+
+    sql_engine = SqlEngine(url_config=sql_config)
+    await IpModel.insert(enriched, sql_engine)
 
     # Check DB for inserted IP
     async with AsyncSession(engine) as session:
