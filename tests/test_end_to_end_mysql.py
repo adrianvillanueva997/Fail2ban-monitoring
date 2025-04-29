@@ -18,7 +18,7 @@ from fail2banmonitoring.utils.environment_variables import EnvironmentVariables
 
 def set_env_vars(mysql, tmp_path) -> None:
     os.environ["DRIVER"] = "mysql+aiomysql"
-    os.environ["HOST"] = mysql.get_container_host_ip()
+    os.environ["HOST"] = "127.0.0.1"
     os.environ["USERNAME"] = mysql.username
     os.environ["PASSWORD"] = mysql.password
     os.environ["DATABASE"] = mysql.dbname
@@ -36,7 +36,6 @@ def prepare_fake_log(log_path):
             await f.flush()
         if Path(log_path).exists():
             async with await anyio.open_file(log_path, "r") as f:
-                content = await f.read()
                 content = await f.read()
 
     return _write()
