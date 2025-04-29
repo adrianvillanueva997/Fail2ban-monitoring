@@ -93,10 +93,12 @@
 import sqlalchemy
 from testcontainers.mysql import MySqlContainer
 
-with MySqlContainer("mysql:5.7.17", dialect="pymysql") as mysql:
-    engine = sqlalchemy.create_engine(mysql.get_connection_url())
 
-    with engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("select version()"))
+def test_something() -> None:
+    with MySqlContainer("mysql:5.7.17", dialect="pymysql") as mysql:
+        engine = sqlalchemy.create_engine(mysql.get_connection_url())
 
-        (version,) = result.fetchone()  # type: ignore
+        with engine.begin() as connection:
+            result = connection.execute(sqlalchemy.text("select version()"))
+
+            (version,) = result.fetchone()  # type: ignore
