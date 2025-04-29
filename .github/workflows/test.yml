@@ -36,18 +36,16 @@ jobs:
 
   test-mysql:
     runs-on: ubuntu-24.04
-    env:
-      MYSQL_DEFAULT_AUTHENTICATION_PLUGIN: mysql_native_password
     services:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: test
+          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"  # Allow empty password for root
           MYSQL_DATABASE: test
         ports:
           - 3306:3306
         options: >-
-          --health-cmd "mysqladmin ping -h 127.0.0.1 -u root --password=test" --health-interval 10s --health-timeout 5s --health-retries 5
+          --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Python
