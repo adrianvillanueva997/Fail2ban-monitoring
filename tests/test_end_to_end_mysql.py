@@ -20,7 +20,7 @@ def set_env_vars(tmp_path: Path) -> None:
     os.environ["DRIVER"] = "mysql+aiomysql"
     os.environ["HOST"] = "127.0.0.1"
     os.environ["PORT"] = "3306"
-    os.environ["USERNAME"] = "test"
+    os.environ["USERNAME"] = "root"
     os.environ["PASSWORD"] = "test"
     os.environ["DATABASE"] = "test"
     os.environ["LOG_PATH"] = str(tmp_path / "fail2ban.log")
@@ -54,7 +54,7 @@ async def test_end_to_end_mysql(tmp_path) -> None:
             conn = pymysql.connect(
                 host="127.0.0.1",
                 port=3306,
-                user="test",
+                user="root",
                 password="test",
                 database="test",
             )

@@ -25,7 +25,7 @@ def set_env_vars(tmp_path: Path) -> None:
     os.environ["HOST"] = "127.0.0.1"
     os.environ["PORT"] = "5432"
     os.environ["USERNAME"] = "test"
-    os.environ["PASSWORD"] = "test"
+    os.environ["PASSWORD"] = ""  # Empty password for trust authentication
     os.environ["DATABASE"] = "test"
     os.environ["LOG_PATH"] = str(tmp_path / "fail2ban.log")
     os.environ["EXPORT_IP_PATH"] = str(tmp_path / "banned.txt")
