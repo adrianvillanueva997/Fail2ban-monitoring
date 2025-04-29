@@ -98,7 +98,7 @@ async def test_end_to_end_mysql(tmp_path) -> None:
 
     await IpModel.insert(enriched, sql_engine)
 
-    async with AsyncSession(sql_engine.engine.engine) as session:
+    async with AsyncSession(sql_engine.engine) as session:
         result = await session.execute(
             text("SELECT ip_address FROM ip WHERE ip_address = '8.8.8.8'"),
         )

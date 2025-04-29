@@ -100,6 +100,12 @@ async def test_end_to_end_postgres(tmp_path: "pathlib.Path") -> None:
     )
 
     sql_engine = SqlEngine(url_config=sql_config)
+
+    # Print debug info - use double engine to access the actual engine
+    print(f"Connection string: {sql_config.url_str}")  # noqa: T201
+    print(f"sql_engine.engine type: {type(sql_engine.engine)}")  # noqa: T201
+
+    # Use the correct engine directly - AsyncEngine class
     await IpModel.create_table(sql_engine)
 
     ips = parser.read_logs()
@@ -110,7 +116,8 @@ async def test_end_to_end_postgres(tmp_path: "pathlib.Path") -> None:
 
     await IpModel.insert(enriched, sql_engine)
 
-    async with AsyncSession(sql_engine.engine.engine) as session:
+    # Fix: Use sql_engine.engine directly for AsyncSession
+    async with AsyncSession(sql_engine.engine) as session:
         result = await session.execute(
             text("SELECT ip_address FROM ip WHERE ip_address = '8.8.8.8'"),
         )
