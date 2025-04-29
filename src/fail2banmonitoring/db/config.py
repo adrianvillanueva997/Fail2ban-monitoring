@@ -41,6 +41,7 @@ class SqlConnectorConfig:
             username=self.username,
             password=self.password,
             host=self.host,
+            port=self.port,
             database=self.database,
         )
 
