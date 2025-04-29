@@ -50,9 +50,12 @@ async def test_end_to_end_mysql(tmp_path) -> None:
 
         # Run the main workflow: parse log, enrich, insert
         environment_variables = EnvironmentVariables()
+        if environment_variables.log_path is None:
+            msg = "LOG_PATH environment variable is not set"
+            raise ValueError(msg)
         parser = Fail2BanLogParser(
-            log_path=environment_variables.log_path or "",
-            output_file=environment_variables.export_ip_path or "",
+            log_path=environment_variables.log_path,
+            output_file=environment_variables.export_ip_path,
         )
         ips = parser.read_logs()
         assert "8.8.8.8" in ips  # noqa: S101
@@ -68,11 +71,11 @@ async def test_end_to_end_mysql(tmp_path) -> None:
             enriched,
             SqlEngine(
                 SqlConnectorConfig(
-                    drivername=environment_variables.driver,  # type: ignore
-                    username=environment_variables.username,  # type: ignore
-                    password=environment_variables.password,  # type: ignore
-                    host=environment_variables.host,  # type: ignore
-                    database=environment_variables.database,  # type: ignore
+                    drivername=environment_variables.driver,
+                    username=environment_variables.username,
+                    password=environment_variables.password,
+                    host=environment_variables.host,
+                    database=environment_variables.database,
                 ),
             ),
         )

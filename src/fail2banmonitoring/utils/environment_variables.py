@@ -1,51 +1,79 @@
 import os
-from enum import Enum
 from functools import cached_property
+from typing import ClassVar
 
 
-# Here we define the environment variables and if they are mandatory or not
-class _EnvVar(Enum):
-    driver = ("DRIVER", True)  # Database driver
-    host = ("HOST", True)  # Database host
-    username = ("USERNAME", True)  # Database username
-    password = ("PASSWORD", True)
-    database = ("DATABASE", True)  # Database name
-    log_path = ("LOG_PATH", False)  # Logs to parse
-    export_ip_path = ("EXPORT_IP_PATH", False)  # Export fetched ips location
-
-
-# Here, based on the previous enum we dynamically create the attributes based on the previous enum
-class _EnvMeta(type):
-    def __new__(cls, name: str, bases: tuple[type, ...], dct: dict) -> type:
-        annotations = {}
-
-        for var in _EnvVar:
-            key = var.name
-            annotations[key] = str | None
-
-            def _getter(v: _EnvVar = var) -> str | None:
-                value: str | None = os.getenv(v.value[0])
-                if v.value[1] and value is None:
-                    msg = f"Missing required env variable: {v.value[0]}"
-                    raise OSError(msg)
-                return value
-
-            dct[key] = cached_property(_getter)
-
-        dct["__annotations__"] = annotations
-        return super().__new__(cls, name, bases, dct)
-
-
-# My IDE was not smart enough to detect the attributes being dynamically created, so i made an interface on top of it.
-# Sadly I have to duplicate the enum values here for typing purposes
-class EnvironmentVariables(metaclass=_EnvMeta):
-
+class EnvironmentVariables:
     """Access environment variables as properties, with validation for required ones."""
 
-    driver: str
-    host: str
-    username: str
-    password: str
-    database: str
-    log_path: str | None
-    export_ip_path: str | None
+    # Define environment variables as (env_var_name, is_required)
+    ENV_VARS: ClassVar[dict[str, tuple[str, bool]]] = {
+        "driver": ("DRIVER", True),
+        "host": ("HOST", True),
+        "username": ("USERNAME", True),
+        "password": ("PASSWORD", True),
+        "database": ("DATABASE", True),
+        "log_path": ("LOG_PATH", False),
+        "export_ip_path": ("EXPORT_IP_PATH", False),
+    }
+
+    def __init_subclass__(cls) -> None:
+        """Validate that subclasses don't override property methods."""
+        for var_name in cls.ENV_VARS:
+            if var_name in cls.__dict__:
+                msg = f"Cannot override {var_name} property in {cls.__name__}"
+                raise TypeError(msg)
+
+    def __getattr__(self, name: str) -> str | None:
+        """Handle dynamic property access for environment variables not explicitly defined."""
+        if name in self.ENV_VARS:
+            return self._get_env_var(name)
+        msg = f"{self.__class__.__name__} has no attribute '{name}'"
+        raise AttributeError(msg)
+
+    def _get_env_var(self, name: str) -> str | None:
+        """Get environment variable value with validation."""
+        env_name, required = self.ENV_VARS[name]
+        value = os.getenv(env_name)
+
+        if required and value is None:
+            msg = f"Missing required environment variable: {env_name}"
+            raise OSError(msg)
+
+        return value
+
+    # Define properties for better IDE support and type checking
+    @cached_property
+    def driver(self) -> str:
+        """Return the value of the DRIVER environment variable."""
+        return self._get_env_var("driver") or ""
+
+    @cached_property
+    def host(self) -> str:
+        """Return the value of the HOST environment variable."""
+        return self._get_env_var("host") or ""
+
+    @cached_property
+    def username(self) -> str:
+        """Return the value of the USERNAME environment variable."""
+        return self._get_env_var("username") or ""
+
+    @cached_property
+    def password(self) -> str:
+        """Return the value of the PASSWORD environment variable."""
+        return self._get_env_var("password") or ""
+
+    @cached_property
+    def database(self) -> str:
+        """Return the value of the DATABASE environment variable."""
+        return self._get_env_var("database") or ""
+
+    @cached_property
+    def log_path(self) -> str | None:
+        """Return the value of the LOG_PATH environment variable, or None if not set."""
+        return self._get_env_var("log_path")
+
+    @cached_property
+    def export_ip_path(self) -> str | None:
+        """Return the value of the EXPORT_IP_PATH environment variable, or None if not set."""
+        return self._get_env_var("export_ip_path")

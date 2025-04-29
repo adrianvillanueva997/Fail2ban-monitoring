@@ -27,6 +27,6 @@ dev = [
 ]
 
 [project.optional-dependencies]
-postgres = ["asyncpg>=0.30.0", "psycopg2-binary>=2.9.10"]
+postgres = ["asyncpg>=0.30.0"]
 mysql = ["aiomysql>=0.2.0", "cryptography>=44.0.2"]
 sqlite = ["aiosqlite>=0.21.0"]

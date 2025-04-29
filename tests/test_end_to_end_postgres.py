@@ -31,9 +31,11 @@ async def test_end_to_end_postgres(tmp_path: "pathlib.Path") -> None:
             "postgresql://",
             "postgresql+asyncpg://",
         )
+
         # Set environment variables for the app
         os.environ["DRIVER"] = "postgresql+asyncpg"
         os.environ["HOST"] = postgres.get_container_host_ip()
+        os.environ["PORT"] = str(postgres.port)
         os.environ["USERNAME"] = postgres.username
         os.environ["PASSWORD"] = postgres.password
         os.environ["DATABASE"] = postgres.dbname
