@@ -36,13 +36,12 @@ async def test_end_to_end_sqlite(tmp_path: pathlib.Path) -> None:
         )
 
     # Verify log file was created properly
-    assert os.path.exists(log_path), f"Log file not created at {log_path}"
-    with open(log_path) as f:
-        content = f.read()
-        assert "Ban 8.8.8.8" in content, (
+    assert pathlib.Path(log_path).exists(), f"Log file not created at {log_path}"  # noqa: S101
+    async with await anyio.open_file(log_path, "r") as f:
+        content = await f.read()
+        assert "Ban 8.8.8.8" in content, (  # noqa: S101
             "Log file doesn't contain the expected IP ban entry"
         )
-
     # Create SQLite database URL for direct table creation
     db_url = f"sqlite+aiosqlite:///{os.environ['DATABASE']}"
     engine = create_async_engine(db_url, echo=True)
@@ -58,7 +57,7 @@ async def test_end_to_end_sqlite(tmp_path: pathlib.Path) -> None:
         output_file=environment_variables.export_ip_path or "",
     )
     ips = parser.read_logs()
-    assert "8.8.8.8" in ips, f"Expected IP 8.8.8.8 not found in parsed IPs: {ips}"
+    assert "8.8.8.8" in ips, f"Expected IP 8.8.8.8 not found in parsed IPs: {ips}"  # noqa: S101
 
     # Enrich IPs
     async with aiohttp.ClientSession() as session:
@@ -70,7 +69,7 @@ async def test_end_to_end_sqlite(tmp_path: pathlib.Path) -> None:
         database=environment_variables.database,
     )
 
-    # Insert using SqlEngine - create engine with different approach
+    # Use the patched TestSqlEngine
     sql_engine = SqlEngine(url_config=sql_config)
     await IpModel.insert(enriched, sql_engine)
 
@@ -80,4 +79,4 @@ async def test_end_to_end_sqlite(tmp_path: pathlib.Path) -> None:
             text("SELECT ip_address FROM ip WHERE ip_address = '8.8.8.8'"),
         )
         row = result.first()
-        assert row is not None, "IP was not inserted into the database"
+        assert row is not None, "IP was not inserted into the database"  # noqa: S101
