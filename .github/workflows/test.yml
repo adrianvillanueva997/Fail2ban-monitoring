@@ -33,8 +33,7 @@ jobs:
         run: |
           uv sync --extra postgres
           uv run pytest tests/test_end_to_end_postgres.py -sv
-
-  test-mysql:
+  test-mariadb:
     runs-on: ubuntu-24.04
     env:
       MYSQL_HOST: 127.0.0.1
@@ -62,13 +61,25 @@ jobs:
         uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04 # v6.0.0
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
-      - name: Grant remote access to MySQL
+      - name: Wait for MariaDB
         run: |
-          mysql -h 127.0.0.1 -uroot -proot -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'root'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%'; FLUSH PRIVILEGES;"
-      - name: Run MySQL tests
+          for i in {1..30}; do
+            if mysqladmin ping -u root -proot --silent; then
+              echo "MariaDB is ready"
+              break
+            fi
+            echo "Waiting for MariaDB... (attempt $i/30)"
+            sleep 2
+          done
+      - name: Create test user
         run: |
-          uv sync --extra mysql
-          uv run pytest tests/test_end_to_end_mysql.py -sv
+          mysql -u root -proot -e "
+            CREATE USER IF NOT EXISTS 'testuser'@'%' IDENTIFIED BY 'test';
+            GRANT ALL PRIVILEGES ON test.* TO 'testuser'@'%';
+            FLUSH PRIVILEGES;"      - name: Run MySQL tests
+          run: |
+            uv sync --extra mysql
+            uv run pytest tests/test_end_to_end_mysql.py -sv
 
   test-sqlite:
     runs-on: ubuntu-24.04
