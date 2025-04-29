@@ -33,7 +33,6 @@ def prepare_fake_log(log_path):
             # Ensure data is flushed to disk
             await f.flush()
 
-        # Verify file was written
         if os.path.exists(log_path):
             with open(log_path) as f:
                 content = f.read()
@@ -43,14 +42,10 @@ def prepare_fake_log(log_path):
 
 @pytest.mark.asyncio
 async def test_end_to_end_mysql(tmp_path) -> None:
-    # Start a MySQL container
     with MySqlContainer("mysql:8.0") as mysql:
         set_env_vars(mysql, tmp_path)
-        # Prepare a fake fail2ban log file
         log_path = os.environ["LOG_PATH"]
         await prepare_fake_log(log_path)
-
-        # Verify file exists before parsing
 
         # Create tables
         db_url = mysql.get_connection_url().replace("mysql://", "mysql+aiomysql://")
@@ -58,7 +53,6 @@ async def test_end_to_end_mysql(tmp_path) -> None:
         async with engine.begin() as conn:
             await conn.run_sync(_Base.metadata.create_all)
 
-        # Run the main workflow: parse log, enrich, insert
         environment_variables = EnvironmentVariables()
         if environment_variables.log_path is None:
             msg = "LOG_PATH environment variable is not set"
@@ -67,8 +61,6 @@ async def test_end_to_end_mysql(tmp_path) -> None:
             log_path=environment_variables.log_path,
             output_file=environment_variables.export_ip_path,
         )
-
-        # Print the actual path values for debugging
 
         ips = parser.read_logs()
         assert "8.8.8.8" in ips  # noqa: S101

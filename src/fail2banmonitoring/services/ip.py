@@ -1,11 +1,11 @@
-import asyncio
+import json
 import logging
+from datetime import datetime
 from enum import Enum
-from itertools import batched
-from typing import Self
+from typing import Any, ClassVar, Literal
 
 import aiohttp
-from pydantic import AliasPath, BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 logger = logging.getLogger(__name__)
 
@@ -17,156 +17,103 @@ class _IPAPIRules(Enum):
 
 
 class IPMetadata(BaseModel):
-    """Represents metadata information for an IP address as returned by ip-api.com.
+    """IP Metadata model."""
 
-    Attributes:
-        status (str): The status of the API response.
-        country (str): The country name.
-        country_code (str): The country code.
-        region (str): The region code.
-        region_name (str): The region name.
-        city (str): The city name.
-        zip (str): The postal code.
-        lat (float): Latitude.
-        lon (float): Longitude.
-        timezone (str): Timezone.
-        isp (str): Internet service provider.
-        org (str): Organization.
-        as_ (str): Autonomous system.
-        query (str): Queried IP address.
+    # Class variable to store the API URL
+    API_URL: ClassVar[str] = "http://ip-api.com/batch"
 
-    """
-
-    status: str
-    country: str
-    country_code: str = Field(validation_alias=AliasPath("CountryCode", 0))
-    region: str
-    region_name: str = Field(validation_alias=AliasPath("RegionName", 0))
-    city: str
-    zip: str
-    lat: float
-    lon: float
-    timezone: str
-    isp: str
-    org: str
-    as_: str = Field(validation_alias=AliasPath("as", 0))
+    status: Literal["success", "fail"]
     query: str
+
+    country: str | None = Field(default=None, alias="country")
+    country_code: str | None = Field(default=None, alias="countryCode")
+    region: str | None = Field(default=None, alias="region")
+    region_name: str | None = Field(default=None, alias="regionName")
+    city: str | None = Field(default=None, alias="city")
+    zip: str | None = Field(default=None, alias="zip")
+    lat: float | None = Field(default=None, alias="lat")
+    lon: float | None = Field(default=None, alias="lon")
+    timezone: str | None = Field(default=None, alias="timezone")
+    isp: str | None = Field(default=None, alias="isp")
+    org: str | None = Field(default=None, alias="org")
+    as_value: str | None = Field(default=None, alias="as")
+
+    # Fail field
+    message: str | None = None
+
+    # Timestamp when this data was retrieved
+    fetched_at: datetime = Field(default_factory=datetime.now)
+
+    @field_validator("as_value", mode="before")
+    @classmethod
+    def validate_as(cls, v: str | None) -> str | None:
+        """Validate the 'as' field which is a reserved keyword in Python."""
+        return v
+
+    @classmethod
+    async def get_ip_metadata(
+        cls,
+        ip: str,
+        session: aiohttp.ClientSession,
+    ) -> "IPMetadata":
+        """Get metadata for a single IP address."""
+        try:
+            batch_result = await cls.get_ips_metadata_batch([ip], session)
+            if batch_result and len(batch_result) > 0:
+                return batch_result[0]
+            msg = f"Failed to get metadata for IP {ip}"
+            raise ValueError(msg)  # noqa: TRY301
+        except Exception as e:
+            logger.exception("Error getting metadata for IP %s:", ip)
+            raise
 
     @classmethod
     async def get_ips_metadata_batch(
         cls,
         ips: list[str],
         session: aiohttp.ClientSession,
-    ) -> list[Self]:
-        """Fetch metadata for a list of IP addresses using the ip-api.com batch endpoint.
-
-        This method sends the IPs in batches of up to 100 per request, respecting the free tier
-        rate limit of 45 requests per minute. It returns a list of IPMetadata objects
-        constructed from the API responses.
-
-        Args:
-            ips (list[str]): List of IP addresses to query.
-            session (aiohttp.ClientSession): An open aiohttp session for making HTTP requests.
-
-        Returns:
-            list[Self]: List of IPMetadata objects with metadata for each IP.
-
-        Raises:
-            aiohttp.ClientError: If an HTTP request fails.
-            pydantic.ValidationError: If the API response cannot be parsed into IPMetadata.
-
-        """
-        logger.info("Fetching batch metadata...")
-        ips_metadata: list[Self] = []
-        for _request_count, _batch in enumerate(batched(ips, 100), start=1):
-            if _request_count % 45 == 0:
-                logger.warning("Rate limit reached, sleeping for 60 seconds...")
-                await asyncio.sleep(60)
-            try:
-                logger.debug(
-                    "Sending batch request #%d with %d IPs",
-                    _request_count,
-                    len(_batch),
-                )
-                async with session.post(
-                    _IPAPIRules.batch.value,
-                    json=_batch,
-                ) as response:
-                    if response.status != 200:
-                        msg = f"Batch request failed with status {response.status}"
-                        logger.error(msg)
-                        raise aiohttp.ClientError(msg)  # noqa: TRY301
-                    try:
-                        batch_json = await response.json()
-                        logger.debug("Received batch response: %s", batch_json)
-                    except Exception as e:
-                        msg = f"Failed to decode JSON: {e}"
-                        logger.exception(msg)
-                        raise ValueError(msg)
-                    try:
-                        ips_metadata.extend(
-                            [cls(**_response) for _response in batch_json],
-                        )
-                        logger.info(
-                            "Successfully parsed %d IPs in batch #%d",
-                            len(batch_json),
-                            _request_count,
-                        )
-                    except Exception as e:
-                        msg = f"Pydantic validation failed: {e}"
-                        logger.exception(msg)
-                        raise ValueError(msg)
-            except aiohttp.ClientError as e:
-                msg = f"HTTP error during batch request: {e}"
-                logger.exception(msg)
-                raise aiohttp.ClientError(msg)
-        return ips_metadata
-
-    @classmethod
-    async def get_ip_metadata(cls, ip: str, session: aiohttp.ClientSession) -> Self:
-        """Asynchronously retrieves metadata for a given IP address using the ip-api.com json endpoint.
-
-        This is intended for single IPs not for batch. This method will create a session and will not check
-        for limit rates.
-
-        Args:
-            ip (str): The IP address to retrieve metadata for.
-            session (aiohttp.ClientSession): An open aiohttp session for making HTTP requests.
-
-        Returns:
-            Self: IPMetadata object with metadata for the IP.
-
-        Raises:
-            aiohttp.ClientError: If there is an issue with the HTTP request.
-            ValueError: If the response cannot be parsed as JSON or does not match the expected format.
-
-        Example:
-            metadata = await MyClass.get_ip_metadata("8.8.8.8")
-
-        """
+    ) -> list["IPMetadata"]:
+        """Get metadata for a batch of IP addresses."""
         try:
-            async with session.get(f"{_IPAPIRules.single.value}/{ip}") as _response:
-                if _response.status != 200:
-                    msg = f"Single IP request failed with status {_response.status}"
-                    logger.error(msg)
-                    raise aiohttp.ClientError(msg)  # noqa: TRY301
-                try:
-                    json_response = await _response.json()
-                    logger.debug("Received single IP response: %s", json_response)
-                except Exception as e:
-                    msg = f"Failed to decode JSON: {e}"
-                    logger.exception(msg)
-                    raise ValueError(msg)
-                try:
-                    result = cls(**json_response)
-                except Exception as e:
-                    msg = f"Pydantic validation failed: {e}"
-                    logger.exception(msg)
-                    raise ValueError(msg)
-                else:
-                    logger.info("Successfully parsed metadata for IP %s", ip)
-                    return result
-        except aiohttp.ClientError as e:
-            msg = f"HTTP error during single IP request: {e}"
-            logger.exception(msg)
-            raise aiohttp.ClientError(msg)
+            logger.info("Fetching metadata for %d IPs", len(ips))
+
+            data = [{"query": ip} for ip in ips]
+
+            async with session.post(cls.API_URL, json=data) as response:
+                if response.status != 200:
+                    text = await response.text()
+                    msg = f"API request failed with status {response.status}: {text}"
+                    raise ValueError(msg)  # noqa: TRY301
+
+                batch_json = await response.json()
+                logger.debug("API response: %s", json.dumps(batch_json))
+
+                # Create models from response
+                result = []
+                for item in batch_json:
+                    try:
+                        # Fix field names if needed
+                        if "as" in item:
+                            item["as_value"] = item.pop("as")
+
+                        # Create model instance
+                        result.append(cls(**item))
+                    except ValidationError as e:
+                        logger.exception("Validation error for item %r", item)
+                        # Create a basic instance with error information
+                        result.append(
+                            cls(
+                                status="fail",
+                                query=item.get("query", "unknown"),
+                                message=f"Validation error: {e}",
+                            ),
+                        )
+
+                return result
+        except Exception as e:
+            logger.exception("Error in batch IP metadata request: %r")
+            raise
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the model to a dictionary."""
+        return self.model_dump()

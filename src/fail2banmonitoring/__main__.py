@@ -41,12 +41,11 @@ async def main() -> None:
         if enriched_ips is not None:
             sql_engine = SqlEngine(
                 SqlConnectorConfig(
-                    # Type ignored because it is already checked on the constructor level of thie environment_variables class
-                    drivername=environment_variables.driver,  # type: ignore
-                    username=environment_variables.username,  # type: ignore
-                    password=environment_variables.password,  # type: ignore
-                    host=environment_variables.host,  # type: ignore
-                    database=environment_variables.database,  # type: ignore
+                    drivername=environment_variables.driver,
+                    username=environment_variables.username,
+                    password=environment_variables.password,
+                    host=environment_variables.host,
+                    database=environment_variables.database,
                 ),
             )
             await IpModel.create_table(sql_engine)

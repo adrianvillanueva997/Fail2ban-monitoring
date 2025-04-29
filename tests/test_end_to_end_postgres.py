@@ -27,6 +27,7 @@ async def test_end_to_end_postgres(tmp_path: "pathlib.Path") -> None:
     """
     # Start a PostgreSQL container
     with PostgresContainer("postgres:15") as postgres:
+        # Update the connection URL to use asyncpg
         db_url = postgres.get_connection_url().replace(
             "postgresql://",
             "postgresql+asyncpg://",
@@ -43,42 +44,44 @@ async def test_end_to_end_postgres(tmp_path: "pathlib.Path") -> None:
         os.environ["EXPORT_IP_PATH"] = str(tmp_path / "banned.txt")
 
         # Prepare a fake fail2ban log file
-
-        log_content = f"{os.environ['LOG_PATH']}"  # Just the path for now
         async with await anyio.open_file(os.environ["LOG_PATH"], "w") as f:
             await f.write(
                 "2024-06-01 12:00:00,000 fail2ban.actions        [1234]: NOTICE  [sshd] Ban 8.8.8.8\n",
             )
+            await f.flush()
 
-        # Create tables
-        engine = create_async_engine(db_url, echo=True)
+        # Create tables - make sure to use asyncpg-compatible engine config
+        engine = create_async_engine(
+            db_url,
+            echo=True,
+        )
+
         async with engine.begin() as conn:
             await conn.run_sync(_Base.metadata.create_all)
 
         # Run the main workflow: parse log, enrich, insert
         environment_variables = EnvironmentVariables()
         parser = Fail2BanLogParser(
-            log_path=environment_variables.log_path or "",
-            output_file=environment_variables.export_ip_path or "",
+            log_path=environment_variables.log_path,
+            output_file=environment_variables.export_ip_path,
         )
         ips = parser.read_logs()
         assert "8.8.8.8" in ips  # noqa: S101
 
         # Enrich IPs
-
         async with aiohttp.ClientSession() as session:
             enriched = await IPMetadata.get_ips_metadata_batch(list(ips), session)
 
-        # Insert into DB
+        # Insert into DB using asyncpg
         await IpModel.insert(
             enriched,
             SqlEngine(
                 SqlConnectorConfig(
-                    drivername=environment_variables.driver,  # type: ignore
-                    username=environment_variables.username,  # type: ignore
-                    password=environment_variables.password,  # type: ignore
-                    host=environment_variables.host,  # type: ignore
-                    database=environment_variables.database,  # type: ignore
+                    drivername=environment_variables.driver,
+                    username=environment_variables.username,
+                    password=environment_variables.password,
+                    host=environment_variables.host,
+                    database=environment_variables.database,
                 ),
             ),
         )
