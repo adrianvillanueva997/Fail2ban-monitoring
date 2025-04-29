@@ -1,9 +1,11 @@
 import os
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import aiohttp
 import anyio
+import psycopg2
 import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,6 +48,24 @@ async def test_end_to_end_postgres(tmp_path: "pathlib.Path") -> None:
     set_env_vars(tmp_path)
     log_path = os.environ["LOG_PATH"]
     await prepare_fake_log(log_path)
+
+    # Wait for Postgres to be ready (retry loop)
+    for _ in range(20):
+        try:
+            conn = psycopg2.connect(
+                host="127.0.0.1",
+                port=5432,
+                user="test",
+                password="test",
+                dbname="test",
+            )
+            conn.close()
+            break
+        except Exception:
+            time.sleep(1)
+    else:
+        msg = "Postgres service did not become ready in time"
+        raise RuntimeError(msg)
 
     environment_variables = EnvironmentVariables()
     if environment_variables.log_path is None:
