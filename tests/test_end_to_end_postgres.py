@@ -52,13 +52,24 @@ async def test_end_to_end_postgres(tmp_path: "pathlib.Path") -> None:
     # Wait for Postgres to be ready (retry loop)
     for _ in range(20):
         try:
-            conn = psycopg2.connect(
-                host="127.0.0.1",
-                port=5432,
-                user="test",
-                password="test",
-                dbname="test",
-            )
+            # Try connection with or without password to handle both trust and password auth
+            try:
+                # First try with password
+                conn = psycopg2.connect(
+                    host="127.0.0.1",
+                    port=5432,
+                    user="test",
+                    password="test",
+                    dbname="test",
+                )
+            except psycopg2.OperationalError:
+                # If that fails, try without password (trust auth)
+                conn = psycopg2.connect(
+                    host="127.0.0.1",
+                    port=5432,
+                    user="test",
+                    dbname="test",
+                )
             conn.close()
             break
         except Exception:

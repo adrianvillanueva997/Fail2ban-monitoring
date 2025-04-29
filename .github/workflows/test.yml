@@ -16,6 +16,7 @@ jobs:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
           POSTGRES_DB: test
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
@@ -60,7 +61,7 @@ jobs:
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       - name: Grant MySQL user permissions for any host
         run: |
-          mysql -h 127.0.0.1 -P 3306 -u root -ptest -e "GRANT ALL PRIVILEGES ON *.* TO 'test'@'%' IDENTIFIED BY 'test'; FLUSH PRIVILEGES;"
+          mysql -h 127.0.0.1 -P 3306 -u root -ptest -e "CREATE USER IF NOT EXISTS 'test'@'%' IDENTIFIED BY 'test'; GRANT ALL PRIVILEGES ON *.* TO 'test'@'%'; FLUSH PRIVILEGES;"
       - name: Run MySQL tests
         run: |
           uv sync --extra mysql
