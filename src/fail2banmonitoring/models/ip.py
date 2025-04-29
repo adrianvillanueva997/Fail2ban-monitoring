@@ -101,7 +101,8 @@ class IpModel(_Base):
         else:
             cls.metadata.create_all(bind=engine)
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        """Initialize subclass; allows for custom subclass initialization."""
         super().__init_subclass__(**kwargs)
 
     @retry(
