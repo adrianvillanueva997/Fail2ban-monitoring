@@ -151,7 +151,7 @@ class IpModel(_Base):
             ip_models = [IpModel.from_metadata(ip) for ip in ips]
 
             try:
-                engine = await sql_engine.engine.engine
+                engine = sql_engine.engine.engine
             except Exception as e:
                 logger.exception("Failed to initialize database engine: %s")
                 msg = f"Database engine initialization failed: {e!s}"

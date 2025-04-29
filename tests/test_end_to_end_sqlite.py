@@ -38,17 +38,17 @@ async def test_end_to_end_sqlite(tmp_path: pathlib.Path) -> None:
 
     # Verify log file was created properly
     assert os.path.exists(log_path), f"Log file not created at {log_path}"
-    async with await anyio.open_file(log_path, "r") as f:
-        content = await f.read()
+    with open(log_path) as f:
+        content = f.read()
         assert "Ban 8.8.8.8" in content, (
             "Log file doesn't contain the expected IP ban entry"
         )
 
-    # Create SQLite database URL
+    # Create SQLite database URL for direct table creation
     db_url = f"sqlite+aiosqlite:///{os.environ['DATABASE']}"
+    engine = create_async_engine(db_url, echo=True)
 
     # Create tables using SQLAlchemy
-    engine = create_async_engine(db_url, echo=True)
     async with engine.begin() as conn:
         await conn.run_sync(_Base.metadata.create_all)
 
@@ -71,14 +71,14 @@ async def test_end_to_end_sqlite(tmp_path: pathlib.Path) -> None:
         database=environment_variables.database,
     )
 
-    # Insert using SqlEngine
+    # Insert using SqlEngine - create engine with different approach
     sql_engine = SqlEngine(url_config=sql_config)
     await IpModel.insert(enriched, sql_engine)
 
-    # Check DB for inserted IP
+    # Check DB for inserted IP - use a new session with the raw engine
     async with AsyncSession(engine) as session:
         result = await session.execute(
-            text("SELECT query FROM ip WHERE query = '8.8.8.8'"),
+            text("SELECT ip_address FROM ip WHERE ip_address = '8.8.8.8'"),
         )
         row = result.first()
         assert row is not None, "IP was not inserted into the database"

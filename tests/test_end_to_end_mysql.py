@@ -1,6 +1,7 @@
 import os  # noqa: INP001
 from pathlib import Path
 
+import aiohttp
 import anyio
 import pytest
 from sqlalchemy import text
@@ -66,8 +67,6 @@ async def test_end_to_end_mysql(tmp_path) -> None:
         ips = parser.read_logs()
         assert "8.8.8.8" in ips  # noqa: S101
 
-        import aiohttp
-
         async with aiohttp.ClientSession() as session:
             enriched = await IPMetadata.get_ips_metadata_batch(list(ips), session)
 
@@ -83,10 +82,10 @@ async def test_end_to_end_mysql(tmp_path) -> None:
         sql_engine = SqlEngine(url_config=sql_config)
         await IpModel.insert(enriched, sql_engine)
 
-        # Check DB for inserted IP
+        # Check DB for inserted IP - use column name ip_address
         async with AsyncSession(engine) as session:
             result = await session.execute(
-                text("SELECT query FROM ip WHERE query = '8.8.8.8'"),
+                text("SELECT ip_address FROM ip WHERE ip_address = '8.8.8.8'"),
             )
             row = result.first()
             assert row is not None, "IP was not inserted into the database"  # noqa: S101
