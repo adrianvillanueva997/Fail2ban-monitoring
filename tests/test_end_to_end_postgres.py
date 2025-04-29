@@ -31,7 +31,7 @@ async def test_end_to_end_postgres(tmp_path: "pathlib.Path") -> None:
         pytest.skip("asyncpg is not installed, skipping PostgreSQL test")
 
     # Start a PostgreSQL container
-    with PostgresContainer("postgres:17") as postgres:
+    with PostgresContainer("postgres:17", driver="asyncpg") as postgres:
         # Setup environment variables
         os.environ["DRIVER"] = "postgresql+asyncpg"
         os.environ["HOST"] = postgres.get_container_host_ip()
