@@ -13,7 +13,8 @@ class Fail2BanLogParser:
         self.log_path = log_path
         self.output_file = output_file
         # Regex pattern to match ban entries with IP addresses
-        self.pattern = re.compile(r"Ban (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})")
+        # More flexible pattern to catch IPs in different formats of ban messages
+        self.pattern = re.compile(r"Ban\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})")
 
     def read_logs(self) -> set[str]:
         """Read logs from the specified file path and extract banned IP addresses.
@@ -37,19 +38,21 @@ class Fail2BanLogParser:
             logger.error("Log file not found at path: %s", self.log_path)
             msg = f"Log file not found: {self.log_path}"
             raise FileNotFoundError(msg)
-            raise FileNotFoundError(msg)
         try:
             logger.info("Reading log file from: %s", self.log_path)
             with Path(self.log_path).open() as log_file:
                 content = log_file.read()
-                content = log_file.read()
 
-                # Use findall to capture all matches at once
+                # Debug log the content for troubleshooting
+                logger.debug("Log file content: %s", content)
+
                 matches = self.pattern.findall(content)
                 for ip in matches:
                     banned_ips.add(ip)
                 if not banned_ips:
                     logger.warning("No IP addresses found in the log file")
+                    # Debug the regex pattern used
+                    logger.debug("Regex pattern: %s", self.pattern.pattern)
                 else:
                     logger.info("Found %d unique banned IPs", len(banned_ips))
                     logger.debug("Found IPs: %s", banned_ips)
@@ -58,17 +61,16 @@ class Fail2BanLogParser:
                 with Path(self.output_file).open("w") as out_file:
                     for ip in banned_ips:
                         out_file.write(f"{ip}\n")
-                        out_file.write(f"{ip}\n")
 
         except PermissionError:
             logger.exception("Permission denied when reading log file")
             raise
         except UnicodeDecodeError as e:
-            logger.exception("Error decoding log file: %s")
+            logger.exception("Error decoding log file: %s", e)
             msg = f"Could not decode log file: {e}"
             raise ValueError(msg)
-        except Exception:
-            logger.exception("Unexpected error reading log file")
+        except Exception as e:
+            logger.exception("Unexpected error reading log file: %s", e)
             raise
         else:
             return banned_ips

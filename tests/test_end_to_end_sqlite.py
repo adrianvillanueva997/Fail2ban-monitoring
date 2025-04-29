@@ -1,6 +1,7 @@
 import os
-from typing import TYPE_CHECKING
+import pathlib
 
+import aiohttp
 import anyio
 import pytest
 from sqlalchemy import text
@@ -13,66 +14,64 @@ from fail2banmonitoring.models.ip import IpModel
 from fail2banmonitoring.services.ip import IPMetadata
 from fail2banmonitoring.utils.environment_variables import EnvironmentVariables
 
-if TYPE_CHECKING:
-    import pathlib
-
 
 @pytest.mark.asyncio
-async def test_end_to_end_sqlite(tmp_path: "pathlib.Path") -> None:
-    """End-to-end test for the SQLite workflow: parses a fake fail2ban log, enriches IPs, inserts them into the database, and verifies insertion."""
-    try:
-        import aiosqlite  # type: ignore # noqa: F401
-    except ImportError:
-        pytest.skip("aiosqlite is not installed, skipping SQLite test")
+async def test_end_to_end_sqlite(tmp_path: pathlib.Path) -> None:
+    """End-to-end test using SQLite.
 
-    # Use a temporary SQLite file
-    db_path = tmp_path / "test.db"
-    db_url = f"sqlite+aiosqlite:///{db_path}"
+    Parses a fake fail2ban log, enriches IP data, inserts it into the database,
+    and verifies the insertion.
+    """
+    # Setup environment variables
     os.environ["DRIVER"] = "sqlite+aiosqlite"
-    os.environ["HOST"] = ""
-    os.environ["USERNAME"] = ""
-    os.environ["PASSWORD"] = ""
-    os.environ["DATABASE"] = str(db_path)
+    os.environ["DATABASE"] = str(tmp_path / "test.db")
     os.environ["LOG_PATH"] = str(tmp_path / "fail2ban.log")
     os.environ["EXPORT_IP_PATH"] = str(tmp_path / "banned.txt")
 
     # Prepare a fake fail2ban log file
-    async with await anyio.open_file(os.environ["LOG_PATH"], "w") as f:
+    log_path = os.environ["LOG_PATH"]
+    async with await anyio.open_file(log_path, "w") as f:
         await f.write(
             "2024-06-01 12:00:00,000 fail2ban.actions        [1234]: NOTICE  [sshd] Ban 8.8.8.8\n",
         )
         await f.flush()
 
-    # Create tables
+    # Verify log file was created properly
+    assert os.path.exists(log_path), f"Log file not created at {log_path}"
+    async with await anyio.open_file(log_path, "r") as f:
+        content = await f.read()
+        assert "Ban 8.8.8.8" in content, (
+            "Log file doesn't contain the expected IP ban entry"
+        )
+
+    # Create SQLite database URL
+    db_url = f"sqlite+aiosqlite:///{os.environ['DATABASE']}"
+
+    # Create tables using SQLAlchemy
     engine = create_async_engine(db_url, echo=True)
     async with engine.begin() as conn:
         await conn.run_sync(_Base.metadata.create_all)
 
-    # Run the main workflow: parse log, enrich, insert
+    # Run the main workflow
     environment_variables = EnvironmentVariables()
     parser = Fail2BanLogParser(
         log_path=environment_variables.log_path,
         output_file=environment_variables.export_ip_path,
     )
     ips = parser.read_logs()
-    assert "8.8.8.8" in ips  # noqa: S101
+    assert "8.8.8.8" in ips, f"Expected IP 8.8.8.8 not found in parsed IPs: {ips}"
 
     # Enrich IPs
-    import aiohttp
-
     async with aiohttp.ClientSession() as session:
         enriched = await IPMetadata.get_ips_metadata_batch(list(ips), session)
 
-    # Create SqlConnectorConfig with SQLite params
+    # Create SqlConnectorConfig
     sql_config = SqlConnectorConfig(
         drivername=environment_variables.driver,
-        username=environment_variables.username,
-        password=environment_variables.password,
-        host=environment_variables.host,
         database=environment_variables.database,
     )
 
-    # Use SqlEngine to insert data
+    # Insert using SqlEngine
     sql_engine = SqlEngine(url_config=sql_config)
     await IpModel.insert(enriched, sql_engine)
 
@@ -82,4 +81,4 @@ async def test_end_to_end_sqlite(tmp_path: "pathlib.Path") -> None:
             text("SELECT query FROM ip WHERE query = '8.8.8.8'"),
         )
         row = result.first()
-        assert row is not None, "IP was not inserted into the database"  # noqa: S101
+        assert row is not None, "IP was not inserted into the database"

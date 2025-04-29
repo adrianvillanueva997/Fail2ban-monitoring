@@ -16,10 +16,10 @@ class SqlConnectorConfig:
     """Dataclass to manage SqlAlchemy connector configurations."""
 
     drivername: str
-    username: str
-    password: str
-    host: str
     database: str
+    username: str | None = None
+    password: str | None = None
+    host: str | None = None
     port: int | None = None
 
     @cached_property
@@ -31,6 +31,11 @@ class SqlConnectorConfig:
                 drivername=self.drivername,
                 database=self.database,
             )
+        # For other database types, all parameters are required
+        if not all([self.username, self.password, self.host]):
+            msg = f"Username, password, and host are required for {self.drivername}"
+            raise ValueError(msg)
+
         return URL.create(
             drivername=self.drivername,
             username=self.username,
@@ -77,6 +82,13 @@ class SqlEngine:
         self,
     ) -> AsyncEngine:
         """Create and return an asynchronous SQLAlchemy engine using the provided configuration."""
+        # SQLite doesn't use pool_size and max_overflow
+        if self.url_config.drivername == "sqlite+aiosqlite":
+            return create_async_engine(
+                self.url_config.url_str,
+                echo=self.echo,
+            )
+        # For other database types
         return create_async_engine(
             self.url_config.url_str,
             echo=self.echo,

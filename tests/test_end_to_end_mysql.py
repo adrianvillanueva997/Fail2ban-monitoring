@@ -66,19 +66,17 @@ async def test_end_to_end_mysql(tmp_path) -> None:
         ips = parser.read_logs()
         assert "8.8.8.8" in ips  # noqa: S101
 
-        # Enrich IPs
         import aiohttp
 
         async with aiohttp.ClientSession() as session:
             enriched = await IPMetadata.get_ips_metadata_batch(list(ips), session)
 
-        # Insert into DB
         sql_config = SqlConnectorConfig(
             drivername=environment_variables.driver,
             username=environment_variables.username,
             password=environment_variables.password,
             host=environment_variables.host,
-            port=int(mysql.port),  # Include port for MySQL
+            port=int(mysql.port),
             database=environment_variables.database,
         )
 
