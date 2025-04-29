@@ -55,6 +55,7 @@ class SqlConnectorConfig:
             "postgresql+asyncpg",
             "mysql+aiomysql",
             "mysql+asyncmy",
+            "sqlite+aiosqlite",
         }
         if self.drivername not in valid_async_drivers:
             msg = (
