@@ -97,6 +97,7 @@ from testcontainers.mysql import MySqlContainer
 def test_something() -> None:
     with MySqlContainer("mysql:5.7.17", dialect="pymysql") as mysql:
         engine = sqlalchemy.create_engine(mysql.get_connection_url())
+        print(mysql.get_connection_url)  # noqa: T201
 
         with engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("select version()"))
