@@ -28,6 +28,9 @@ jobs:
         uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04 # v6.0.0
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+      - name: Grant Postgres user permissions
+        run: |
+          PGPASSWORD=test psql -h 127.0.0.1 -U test -c "ALTER USER test WITH SUPERUSER;"
       - name: Run Postgres tests
         run: |
           uv sync --extra postgres
@@ -55,6 +58,9 @@ jobs:
         uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04 # v6.0.0
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+      - name: Grant MySQL user permissions for any host
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -u root -ptest -e "GRANT ALL PRIVILEGES ON *.* TO 'test'@'%' IDENTIFIED BY 'test'; FLUSH PRIVILEGES;"
       - name: Run MySQL tests
         run: |
           uv sync --extra mysql
