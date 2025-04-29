@@ -41,18 +41,20 @@ async def main() -> None:
                     session,
                 )
         if enriched_ips is not None:
+            sql_engine = SqlEngine(
+                SqlConnectorConfig(
+                    # Type ignored because it is already checked on the constructor level of thie environment_variables class
+                    drivername=environment_variables.driver,  # type: ignore
+                    username=environment_variables.username,  # type: ignore
+                    password=environment_variables.password,  # type: ignore
+                    host=environment_variables.host,  # type: ignore
+                    database=environment_variables.database,  # type: ignore
+                ),
+            )
+            await IpModel.create_table(sql_engine)
             await IpModel.insert(
                 enriched_ips,
-                SqlEngine(
-                    SqlConnectorConfig(
-                        # Type ignored because it is already checked on the constructor level of thie environment_variables class
-                        drivername=environment_variables.driver,  # type: ignore
-                        username=environment_variables.username,  # type: ignore
-                        password=environment_variables.password,  # type: ignore
-                        host=environment_variables.host,  # type: ignore
-                        database=environment_variables.database,  # type: ignore
-                    ),
-                ),
+                sql_engine,
             )
     except Exception:
         logger.exception("An unexpected error occurred in the main workflow")

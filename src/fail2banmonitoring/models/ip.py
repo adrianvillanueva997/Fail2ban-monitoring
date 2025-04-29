@@ -3,7 +3,7 @@ from typing import Self
 
 from sqlalchemy import Double, String
 from sqlalchemy.exc import DBAPIError, OperationalError
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm.properties import MappedColumn
 from tenacity import (
@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 class IpModel(_Base):
-
     """Represents an IP address entry in the database with associated metadata.
 
     Attributes
@@ -89,6 +88,19 @@ class IpModel(_Base):
             org=ip_metadata.org,
             _as=ip_metadata.as_,
         )
+
+    @classmethod
+    async def create_table(cls, sql_engine: SqlEngine) -> None:
+        """Create the IP table in the database if it does not exist."""
+        engine = sql_engine.engine
+        if isinstance(engine, AsyncEngine):
+            async with engine.begin() as conn:
+                await conn.run_sync(cls.metadata.create_all)
+        else:
+            cls.metadata.create_all(bind=engine)
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
 
     @retry(
         reraise=True,

@@ -14,28 +14,36 @@ from fail2banmonitoring.services.ip import IPMetadata
 from fail2banmonitoring.utils.environment_variables import EnvironmentVariables
 
 
-@pytest.mark.asyncio
-async def test_end_to_end_mysql(tmp_path) -> None:
-    # Start a MySQL container
-    with MySqlContainer("mysql:8.0") as mysql:
-        db_url = mysql.get_connection_url().replace("mysql://", "mysql+aiomysql://")
-        # Set environment variables for the app
-        os.environ["DRIVER"] = "mysql+aiomysql"
-        os.environ["HOST"] = mysql.get_container_host_ip()
-        os.environ["USERNAME"] = mysql.username
-        os.environ["PASSWORD"] = mysql.password
-        os.environ["DATABASE"] = mysql.dbname
-        os.environ["LOG_PATH"] = str(tmp_path / "fail2ban.log")
-        os.environ["EXPORT_IP_PATH"] = str(tmp_path / "banned.txt")
+def set_env_vars(mysql, tmp_path) -> None:
+    os.environ["DRIVER"] = "mysql+aiomysql"
+    os.environ["HOST"] = mysql.get_container_host_ip()
+    os.environ["USERNAME"] = mysql.username
+    os.environ["PASSWORD"] = mysql.password
+    os.environ["DATABASE"] = mysql.dbname
+    os.environ["LOG_PATH"] = str(tmp_path / "fail2ban.log")
+    os.environ["EXPORT_IP_PATH"] = str(tmp_path / "banned.txt")
 
-        # Prepare a fake fail2ban log file
 
-        async with await anyio.open_file(os.environ["LOG_PATH"], "w") as f:
+def prepare_fake_log(log_path):
+    async def _write() -> None:
+        async with await anyio.open_file(log_path, "w") as f:
             await f.write(
                 "2024-06-01 12:00:00,000 fail2ban.actions        [1234]: NOTICE  [sshd] Ban 8.8.8.8\n",
             )
 
+    return _write()
+
+
+@pytest.mark.asyncio
+async def test_end_to_end_mysql(tmp_path) -> None:
+    # Start a MySQL container
+    with MySqlContainer("mysql:8.0") as mysql:
+        set_env_vars(mysql, tmp_path)
+        # Prepare a fake fail2ban log file
+        await prepare_fake_log(os.environ["LOG_PATH"])
+
         # Create tables
+        db_url = mysql.get_connection_url().replace("mysql://", "mysql+aiomysql://")
         engine = create_async_engine(db_url, echo=True)
         async with engine.begin() as conn:
             await conn.run_sync(_Base.metadata.create_all)

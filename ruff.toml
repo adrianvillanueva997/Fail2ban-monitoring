@@ -49,6 +49,7 @@ ignore = [
     "BLE001",
     "TRY002",
     "F841",
+    "D203",
 ]
 fixable = ["ALL"]
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
