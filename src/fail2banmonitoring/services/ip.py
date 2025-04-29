@@ -134,10 +134,10 @@ class IPMetadata(BaseModel):
                         raise ValueError(msg) from e
 
                     logger.debug("API response: %s...", json.dumps(batch_json)[:500])
-            except asyncio.TimeoutError as e:
+            except TimeoutError as e:
                 logger.exception("API request timed out after 30 seconds: %s")
                 msg = f"API request timed out: {e}"
-                raise asyncio.TimeoutError(msg) from e
+                raise TimeoutError(msg) from e
             except aiohttp.ClientError as e:
                 logger.exception("HTTP request error: %s")
                 raise

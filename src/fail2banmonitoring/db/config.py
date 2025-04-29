@@ -34,16 +34,12 @@ class SqlConnectorConfig:
                 drivername=self.drivername,
                 database=self.database,
             )
-        # For other database types, all parameters are required
-        if not all(
-            [
-                self.username,
-                self.password,
-                self.host,
-                self.port,
-                self.drivername,
-                self.database,
-            ],
+
+        if (
+            not all(
+                [self.username, self.host, self.port, self.drivername, self.database],
+            )
+            and self.password is not None
         ):
             msg = f"Username, password, and host are required for {self.drivername}"
             raise ValueError(msg)
