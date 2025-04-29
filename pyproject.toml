@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "aiohttp[speedups]>=3.11.16",
+
     "pydantic>=2.11.3",
     "sqlalchemy[asyncio]>=2.0.40",
     "tenacity>=9.1.2",
@@ -27,6 +28,6 @@ dev = [
 ]
 
 [project.optional-dependencies]
-postgres = ["asyncpg>=0.30.0"]
+postgres = ["asyncpg>=0.30.0", "psycopg[binary]>=3.2.6"]
 mysql = ["aiomysql>=0.2.0"]
 sqlite = ["aiosqlite>=0.21.0"]
