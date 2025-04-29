@@ -20,8 +20,8 @@ def set_env_vars(mysql: MySqlContainer, tmp_path: Path) -> None:
     os.environ["DRIVER"] = "mysql+aiomysql"
     os.environ["HOST"] = mysql.get_container_host_ip()
     os.environ["PORT"] = str(mysql.get_exposed_port(3306))
-    os.environ["USERNAME"] = "test"
-    os.environ["PASSWORD"] = "test"  # noqa: S105
+    os.environ["USERNAME"] = mysql.username
+    os.environ["PASSWORD"] = mysql.root_password
     os.environ["DATABASE"] = "dbname"
     os.environ["LOG_PATH"] = str(tmp_path / "fail2ban.log")
     os.environ["EXPORT_IP_PATH"] = str(tmp_path / "banned.txt")
