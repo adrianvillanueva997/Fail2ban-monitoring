@@ -43,7 +43,13 @@ def prepare_fake_log(log_path: str):
 
 @pytest.mark.asyncio
 async def test_end_to_end_mysql(tmp_path) -> None:
-    with MySqlContainer("mysql:8.0", dialect="pymysql") as mysql:
+    with MySqlContainer(
+        "mysql:8.0",
+        dialect="pymysql",
+        username="test",
+        password="test",  # noqa: S106
+        dbname="testdb",
+    ) as mysql:
         set_env_vars(mysql, tmp_path)
         log_path = os.environ["LOG_PATH"]
         await prepare_fake_log(log_path)
