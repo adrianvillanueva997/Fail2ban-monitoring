@@ -1,7 +1,7 @@
 import logging
 from typing import Self
 
-from sqlalchemy import Double, String
+from sqlalchemy import Double, Integer, String
 from sqlalchemy.exc import DBAPIError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
@@ -58,6 +58,7 @@ class IpModel(_Base):
     """
 
     __tablename__ = "ip"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     country: Mapped[str] = mapped_column(String(30))
     country_code: Mapped[str] = mapped_column(String(30))
     region: Mapped[str] = mapped_column(String(30))
