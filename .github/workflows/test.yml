@@ -36,16 +36,24 @@ jobs:
 
   test-mysql:
     runs-on: ubuntu-24.04
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: test
     services:
       mysql:
-        image: mysql:8.0
+        image: mariadb:10.6
         env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"  # Allow empty password for root
+          MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: test
         ports:
           - 3306:3306
         options: >-
-          --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 5
+          --health-cmd="mysqladmin ping --host=127.0.0.1 --password=root"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Python
@@ -54,6 +62,9 @@ jobs:
         uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04 # v6.0.0
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+      - name: Grant remote access to MySQL
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'root'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%'; FLUSH PRIVILEGES;"
       - name: Run MySQL tests
         run: |
           uv sync --extra mysql

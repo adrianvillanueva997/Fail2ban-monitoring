@@ -21,7 +21,7 @@ def set_env_vars(tmp_path: Path) -> None:
     os.environ["HOST"] = "127.0.0.1"
     os.environ["PORT"] = "3306"
     os.environ["USERNAME"] = "root"
-    os.environ["PASSWORD"] = ""
+    os.environ["PASSWORD"] = "root"  # Set password to 'root' to match CI
     os.environ["DATABASE"] = "test"
     os.environ["LOG_PATH"] = str(tmp_path / "fail2ban.log")
     os.environ["EXPORT_IP_PATH"] = str(tmp_path / "banned.txt")
@@ -55,7 +55,7 @@ async def test_end_to_end_mysql(tmp_path) -> None:
                 host="127.0.0.1",
                 port=3306,
                 user="root",
-                password="",
+                password="root",  # Match password in CI
                 database="test",
             )
             conn.close()
