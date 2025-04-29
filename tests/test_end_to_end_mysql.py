@@ -47,10 +47,10 @@ async def test_end_to_end_mysql(tmp_path) -> None:
     with MySqlContainer(
         "mysql:8.0",
         dialect="pymysql",
-        username="test",
-        password="test",  # noqa: S106
+        username="root",
+        password="root",  # noqa: S106
         dbname="testdb",
-    ) as mysql:
+    ).with_command("--default-authentication-plugin=mysql_native_password") as mysql:
         await asyncio.sleep(5)
         set_env_vars(mysql, tmp_path)
         log_path = os.environ["LOG_PATH"]
