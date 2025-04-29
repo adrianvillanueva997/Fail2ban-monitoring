@@ -15,6 +15,7 @@ class EnvironmentVariables:
         "database": ("DATABASE", True),
         "log_path": ("LOG_PATH", True),  # Changed to required
         "export_ip_path": ("EXPORT_IP_PATH", False),
+        "port": ("PORT", False),
     }
 
     def __init_subclass__(cls) -> None:
@@ -79,3 +80,8 @@ class EnvironmentVariables:
     def export_ip_path(self) -> str | None:
         """Return the value of the EXPORT_IP_PATH environment variable, or None if not set."""
         return self._get_env_var("export_ip_path")
+
+    @cached_property
+    def port(self) -> str | None:
+        """Return the value of the Port environment variable, or None if not set."""
+        return self._get_env_var("port") or ""

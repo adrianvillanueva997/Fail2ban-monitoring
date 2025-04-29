@@ -19,6 +19,7 @@ from fail2banmonitoring.utils.environment_variables import EnvironmentVariables
 def set_env_vars(mysql, tmp_path) -> None:
     os.environ["DRIVER"] = "mysql+aiomysql"
     os.environ["HOST"] = "127.0.0.1"
+    os.environ["PORT"] = str(mysql.port)
     os.environ["USERNAME"] = mysql.username
     os.environ["PASSWORD"] = mysql.password
     os.environ["DATABASE"] = mysql.dbname
@@ -69,12 +70,15 @@ async def test_end_to_end_mysql(tmp_path) -> None:
         async with aiohttp.ClientSession() as session:
             enriched = await IPMetadata.get_ips_metadata_batch(list(ips), session)
 
+        if environment_variables.port is None:
+            msg = "PORT environment variable is not set"
+            raise ValueError(msg)
         sql_config = SqlConnectorConfig(
             drivername=environment_variables.driver,
             username=environment_variables.username,
             password=environment_variables.password,
             host=environment_variables.host,
-            port=int(mysql.port),
+            port=int(environment_variables.port),
             database=environment_variables.database,
         )
 
