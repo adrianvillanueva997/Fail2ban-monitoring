@@ -63,7 +63,7 @@ async def test_end_to_end_sqlite(tmp_path: "pathlib.Path") -> None:
     async with aiohttp.ClientSession() as session:
         enriched = await IPMetadata.get_ips_metadata_batch(list(ips), session)
 
-    # Insert into DB using SqlEngine with SQLite+aiosqlite support
+    # Create SqlConnectorConfig with SQLite params
     sql_config = SqlConnectorConfig(
         drivername=environment_variables.driver,
         username=environment_variables.username,
@@ -72,6 +72,7 @@ async def test_end_to_end_sqlite(tmp_path: "pathlib.Path") -> None:
         database=environment_variables.database,
     )
 
+    # Use SqlEngine to insert data
     sql_engine = SqlEngine(url_config=sql_config)
     await IpModel.insert(enriched, sql_engine)
 

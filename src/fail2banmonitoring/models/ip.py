@@ -1,11 +1,11 @@
 import logging
+from datetime import datetime
 from typing import Self
 
-from sqlalchemy import Double, Integer, String
-from sqlalchemy.exc import DBAPIError, OperationalError
+import sqlalchemy as sa
+from sqlalchemy.exc import DBAPIError, OperationalError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.orm.properties import MappedColumn
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -25,53 +25,61 @@ class IpModel(_Base):
 
     Attributes
     ----------
-    country : str
+    country : str | None
         The country of the IP address.
-    country_code : str
+    country_code : str | None
         The country code of the IP address.
-    region : str
+    region : str | None
         The region of the IP address.
-    region_name : str
+    region_name : str | None
         The name of the region of the IP address.
-    city : str
+    city : str | None
         The city of the IP address.
-    zip : str
+    zip : str | None
         The ZIP code of the IP address.
-    lat : float
+    lat : float | None
         The latitude of the IP address.
-    lon : float
+    lon : float | None
         The longitude of the IP address.
-    timezone : str
+    timezone : str | None
         The timezone of the IP address.
-    isp : str
+    isp : str | None
         The ISP of the IP address.
-    org : str
+    org : str | None
         The organization of the IP address.
-    _as : str
+    as_field : str | None
         The autonomous system (AS) of the IP address.
+    ip_address : str | None
+        The IP address.
+    created_at : datetime
+        The timestamp when the record was created.
 
     Methods
     -------
-    insert(ips: list[IPMetadata]) -> None
+    insert(ips: List[IPMetadata], sql_engine: SqlEngine) -> None
         Insert a list of IPMetadata objects into the database.
 
     """
 
     __tablename__ = "ip"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    country: Mapped[str] = mapped_column(String(30))
-    country_code: Mapped[str] = mapped_column(String(30))
-    region: Mapped[str] = mapped_column(String(30))
-    region_name: Mapped[str] = mapped_column(String(30))
-    city: Mapped[str] = mapped_column(String(30))
-    zip: Mapped[str] = mapped_column(String(30))
-    lat: Mapped[float] = mapped_column(Double)
-    lon: Mapped[float] = mapped_column(Double)
-    timezone: Mapped[str] = mapped_column(String(50))
-    isp: Mapped[str] = mapped_column(String(50))
-    org: MappedColumn[str] = mapped_column(String(50))
-    _as: Mapped[str] = mapped_column(String(50), name="as")
-    query: Mapped[str] = mapped_column(String(50), name="ip_address")
+    id: Mapped[int] = mapped_column(sa.Integer, primary_key=True, autoincrement=True)
+    country: Mapped[str | None] = mapped_column(sa.String(30))
+    country_code: Mapped[str | None] = mapped_column(sa.String(30))
+    region: Mapped[str | None] = mapped_column(sa.String(30))
+    region_name: Mapped[str | None] = mapped_column(sa.String(30))
+    city: Mapped[str | None] = mapped_column(sa.String(30))
+    zip: Mapped[str | None] = mapped_column(sa.String(30))
+    lat: Mapped[float | None] = mapped_column(sa.Float)
+    lon: Mapped[float | None] = mapped_column(sa.Float)
+    timezone: Mapped[str | None] = mapped_column(sa.String(50))
+    isp: Mapped[str | None] = mapped_column(sa.String(50))
+    org: Mapped[str | None] = mapped_column(sa.String(50))
+    as_field: Mapped[str | None] = mapped_column("as", sa.String(50), nullable=True)
+    ip_address: Mapped[str | None] = mapped_column(sa.String(50), name="query")
+    created_at: Mapped[datetime] = mapped_column(
+        sa.DateTime,
+        server_default=sa.func.now(),
+    )
 
     @classmethod
     def from_metadata(cls, ip_metadata: IPMetadata) -> Self:
@@ -88,7 +96,8 @@ class IpModel(_Base):
             timezone=ip_metadata.timezone,
             isp=ip_metadata.isp,
             org=ip_metadata.org,
-            _as=ip_metadata.as_value,
+            as_field=ip_metadata.as_value,
+            ip_address=ip_metadata.query,
         )
 
     @classmethod
@@ -117,22 +126,43 @@ class IpModel(_Base):
     )
     @staticmethod
     async def insert(ips: list[IPMetadata], sql_engine: SqlEngine) -> None:
-        """Insert a list of IPMetadata objects into the database.
+        """Insert a list of IPMetadata objects into the database efficiently using bulk insert.
 
         Parameters
         ----------
-        ips : list[IPMetadata]
+        ips : List[IPMetadata]
             The list of IPMetadata objects to be inserted.
         sql_engine : SqlEngine
             The SQLAlchemy engine instance used for database operations.
 
+        Raises
+        ------
+        SQLAlchemyError
+            If a database error occurs that cannot be resolved with retries
+        ValueError
+            If there's an issue with the data format or the engine is not initialized
+
         """
-        ip_models = [IpModel.from_metadata(ip) for ip in ips]
-        async with AsyncSession(sql_engine.engine) as session, session.begin():
+        if not ips:
+            logger.debug("No IP records to insert")
+            return
+
+        try:
+            ip_models = [IpModel.from_metadata(ip) for ip in ips]
+
             try:
-                session.add_all(ip_models)
-                logger.debug("Inserted %d IP records into the database.", len(ips))
-            except Exception:
-                await session.rollback()
-                logger.exception("Exception occurred during IP insertion.")
+                engine = await sql_engine.engine.engine
+            except Exception as e:
+                logger.exception("Failed to initialize database engine: %s")
+                msg = f"Database engine initialization failed: {e!s}"
+                raise ValueError(msg) from e
+            try:
+                async with AsyncSession(engine) as session, session.begin():
+                    session.add_all(ip_models)
+                logger.debug("Bulk inserted %d IP records into the database", len(ips))
+            except SQLAlchemyError as e:
+                logger.exception("Database error during bulk insert: %s")
                 raise
+        except Exception as e:
+            logger.exception("Failed to insert IP records: %s")
+            raise

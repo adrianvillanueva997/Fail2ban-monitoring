@@ -1,4 +1,5 @@
 import os  # noqa: INP001
+from pathlib import Path
 
 import anyio
 import pytest
@@ -32,10 +33,10 @@ def prepare_fake_log(log_path):
             )
             # Ensure data is flushed to disk
             await f.flush()
-
-        if os.path.exists(log_path):
-            with open(log_path) as f:
-                content = f.read()
+        if Path(log_path).exists():
+            async with await anyio.open_file(log_path, "r") as f:
+                content = await f.read()
+                content = await f.read()
 
     return _write()
 
@@ -72,18 +73,17 @@ async def test_end_to_end_mysql(tmp_path) -> None:
             enriched = await IPMetadata.get_ips_metadata_batch(list(ips), session)
 
         # Insert into DB
-        await IpModel.insert(
-            enriched,
-            SqlEngine(
-                SqlConnectorConfig(
-                    drivername=environment_variables.driver,
-                    username=environment_variables.username,
-                    password=environment_variables.password,
-                    host=environment_variables.host,
-                    database=environment_variables.database,
-                ),
-            ),
+        sql_config = SqlConnectorConfig(
+            drivername=environment_variables.driver,
+            username=environment_variables.username,
+            password=environment_variables.password,
+            host=environment_variables.host,
+            port=int(mysql.port),  # Include port for MySQL
+            database=environment_variables.database,
         )
+
+        sql_engine = SqlEngine(url_config=sql_config)
+        await IpModel.insert(enriched, sql_engine)
 
         # Check DB for inserted IP
         async with AsyncSession(engine) as session:

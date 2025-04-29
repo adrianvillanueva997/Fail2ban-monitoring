@@ -25,15 +25,14 @@ async def test_end_to_end_postgres(tmp_path: "pathlib.Path") -> None:
 
     Enriches IP data, inserts it into the database, and verifies the insertion.
     """
-    # Start a PostgreSQL container
-    with PostgresContainer("postgres:15") as postgres:
-        # Update the connection URL to use asyncpg
-        db_url = postgres.get_connection_url().replace(
-            "postgresql://",
-            "postgresql+asyncpg://",
-        )
+    try:
+        import asyncpg  # type: ignore # noqa: F401
+    except ImportError:
+        pytest.skip("asyncpg is not installed, skipping PostgreSQL test")
 
-        # Set environment variables for the app
+    # Start a PostgreSQL container
+    with PostgresContainer("postgres:17") as postgres:
+        # Setup environment variables
         os.environ["DRIVER"] = "postgresql+asyncpg"
         os.environ["HOST"] = postgres.get_container_host_ip()
         os.environ["PORT"] = str(postgres.port)
@@ -50,16 +49,18 @@ async def test_end_to_end_postgres(tmp_path: "pathlib.Path") -> None:
             )
             await f.flush()
 
-        # Create tables - make sure to use asyncpg-compatible engine config
-        engine = create_async_engine(
-            db_url,
-            echo=True,
+        # Create database URL for asyncpg
+        db_url = postgres.get_connection_url().replace(
+            "postgresql://",
+            "postgresql+asyncpg://",
         )
 
+        # Create tables using SQLAlchemy
+        engine = create_async_engine(db_url, echo=True)
         async with engine.begin() as conn:
             await conn.run_sync(_Base.metadata.create_all)
 
-        # Run the main workflow: parse log, enrich, insert
+        # Run the main workflow
         environment_variables = EnvironmentVariables()
         parser = Fail2BanLogParser(
             log_path=environment_variables.log_path,
@@ -72,19 +73,19 @@ async def test_end_to_end_postgres(tmp_path: "pathlib.Path") -> None:
         async with aiohttp.ClientSession() as session:
             enriched = await IPMetadata.get_ips_metadata_batch(list(ips), session)
 
-        # Insert into DB using asyncpg
-        await IpModel.insert(
-            enriched,
-            SqlEngine(
-                SqlConnectorConfig(
-                    drivername=environment_variables.driver,
-                    username=environment_variables.username,
-                    password=environment_variables.password,
-                    host=environment_variables.host,
-                    database=environment_variables.database,
-                ),
-            ),
+        # Create SqlConnectorConfig explicitly with port
+        sql_config = SqlConnectorConfig(
+            drivername=environment_variables.driver,
+            username=environment_variables.username,
+            password=environment_variables.password,
+            host=environment_variables.host,
+            port=int(os.environ["PORT"]),  # Explicitly include port
+            database=environment_variables.database,
         )
+
+        # Insert using SqlEngine
+        sql_engine = SqlEngine(url_config=sql_config)
+        await IpModel.insert(enriched, sql_engine)
 
         # Check DB for inserted IP
         async with AsyncSession(engine) as session:

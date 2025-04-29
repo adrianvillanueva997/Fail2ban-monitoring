@@ -56,12 +56,26 @@ class IPMetadata(BaseModel):
         ip: str,
         session: aiohttp.ClientSession,
     ) -> "IPMetadata":
-        """Get metadata for a single IP address."""
+        """Get metadata for a single IP address.
+
+        Args:
+            ip: IP address to get metadata for
+            session: aiohttp client session
+
+        Returns:
+            IPMetadata object with IP information
+
+        Raises:
+            ValueError: If the metadata cannot be retrieved or is invalid
+            aiohttp.ClientError: If there's an issue with the HTTP request
+
+        """
         try:
             batch_result = await cls.get_ips_metadata_batch([ip], session)
             if batch_result and len(batch_result) > 0:
                 return batch_result[0]
             msg = f"Failed to get metadata for IP {ip}"
+            logger.error(msg)
             raise ValueError(msg)  # noqa: TRY301
         except Exception as e:
             logger.exception("Error getting metadata for IP %s:", ip)
@@ -73,46 +87,86 @@ class IPMetadata(BaseModel):
         ips: list[str],
         session: aiohttp.ClientSession,
     ) -> list["IPMetadata"]:
-        """Get metadata for a batch of IP addresses."""
+        """Get metadata for a batch of IP addresses.
+
+        Args:
+            ips: List of IP addresses to get metadata for
+            session: aiohttp client session
+
+        Returns:
+            List of IPMetadata objects with IP information
+
+        Raises:
+            ValueError: If the API request fails or returns invalid data
+            aiohttp.ClientError: If there's an issue with the HTTP request
+            TimeoutError: If the API request times out
+
+        """
+        if not ips:
+            logger.warning("No IPs provided to get metadata for")
+            return []
+
         try:
             logger.info("Fetching metadata for %d IPs", len(ips))
 
             data = [{"query": ip} for ip in ips]
 
-            async with session.post(cls.API_URL, json=data) as response:
-                if response.status != 200:
-                    text = await response.text()
-                    msg = f"API request failed with status {response.status}: {text}"
-                    raise ValueError(msg)  # noqa: TRY301
-
-                batch_json = await response.json()
-                logger.debug("API response: %s", json.dumps(batch_json))
-
-                # Create models from response
-                result = []
-                for item in batch_json:
-                    try:
-                        # Fix field names if needed
-                        if "as" in item:
-                            item["as_value"] = item.pop("as")
-
-                        # Create model instance
-                        result.append(cls(**item))
-                    except ValidationError as e:
-                        logger.exception("Validation error for item %r", item)
-                        # Create a basic instance with error information
-                        result.append(
-                            cls(
-                                status="fail",
-                                query=item.get("query", "unknown"),
-                                message=f"Validation error: {e}",
-                            ),
+            try:
+                async with session.post(
+                    cls.API_URL,
+                    json=data,
+                    timeout=aiohttp.ClientTimeout(total=30),
+                    headers={"Content-Type": "application/json"},
+                ) as response:
+                    if response.status != 200:
+                        text = await response.text()
+                        msg = (
+                            f"API request failed with status {response.status}: {text}"
                         )
+                        logger.error(msg)
+                        raise ValueError(msg)
+                    try:
+                        batch_json = await response.json()
+                    except json.JSONDecodeError as e:
+                        text = await response.text()
+                        logger.exception("Invalid JSON response: %s...", text[:200])
+                        msg = f"Invalid JSON response from API: {e}"
+                        raise ValueError(msg) from e
 
-                return result
-        except Exception as e:
-            logger.exception("Error in batch IP metadata request: %r")
+                    logger.debug("API response: %s...", json.dumps(batch_json)[:500])
+            except TimeoutError as e:
+                logger.exception("API request timed out after 30 seconds: %s")
+                msg = f"API request timed out: {e}"
+                raise TimeoutError(msg) from e
+            except aiohttp.ClientError as e:
+                logger.exception("HTTP request error: %s")
+                raise
+
+            # Create models from response
+            result = []
+            for item in batch_json:
+                try:
+                    if "as" in item:
+                        item["as_value"] = item.pop("as")
+
+                    result.append(cls(**item))
+                except ValidationError as e:
+                    logger.exception("Validation error for item %r: ", item)
+                    result.append(
+                        cls(
+                            status="fail",
+                            query=item.get("query", "unknown"),
+                            message=f"Validation error: {e}",
+                        ),
+                    )
+            return result  # noqa: TRY300
+        except (aiohttp.ClientError, ValueError, TimeoutError) as e:
+            # Let these specific exceptions propagate with their original type
             raise
+        except Exception as e:
+            logger.exception("Unexpected error in batch IP metadata request: %s")
+            msg = f"Failed to fetch IP metadata: {e}"
+            raise ValueError(msg) from e
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the model to a dictionary."""
