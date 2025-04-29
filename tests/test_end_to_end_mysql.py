@@ -30,6 +30,13 @@ def prepare_fake_log(log_path):
             await f.write(
                 "2024-06-01 12:00:00,000 fail2ban.actions        [1234]: NOTICE  [sshd] Ban 8.8.8.8\n",
             )
+            # Ensure data is flushed to disk
+            await f.flush()
+
+        # Verify file was written
+        if os.path.exists(log_path):
+            with open(log_path) as f:
+                content = f.read()
 
     return _write()
 
@@ -40,7 +47,10 @@ async def test_end_to_end_mysql(tmp_path) -> None:
     with MySqlContainer("mysql:8.0") as mysql:
         set_env_vars(mysql, tmp_path)
         # Prepare a fake fail2ban log file
-        await prepare_fake_log(os.environ["LOG_PATH"])
+        log_path = os.environ["LOG_PATH"]
+        await prepare_fake_log(log_path)
+
+        # Verify file exists before parsing
 
         # Create tables
         db_url = mysql.get_connection_url().replace("mysql://", "mysql+aiomysql://")
@@ -57,6 +67,9 @@ async def test_end_to_end_mysql(tmp_path) -> None:
             log_path=environment_variables.log_path,
             output_file=environment_variables.export_ip_path,
         )
+
+        # Print the actual path values for debugging
+
         ips = parser.read_logs()
         assert "8.8.8.8" in ips  # noqa: S101
 

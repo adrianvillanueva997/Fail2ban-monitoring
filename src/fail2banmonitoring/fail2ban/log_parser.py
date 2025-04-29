@@ -1,64 +1,48 @@
-from datetime import UTC, datetime
+import re
 from pathlib import Path
 
 
 class Fail2BanLogParser:
+    """Parse fail2ban logs and extract IP addresses."""
 
-    """Parser for Fail2Ban log files to extract banned IP addresses."""
-
-    def __init__(
-        self,
-        log_path: str,
-        output_file: None | str = None,
-    ) -> None:
-        """Initialize the Fail2BanLogParser.
+    def __init__(self, log_path: str | None, output_file: str | None) -> None:
+        """Initialize the Fail2BanLogParser with log and output file paths.
 
         Args:
-            log_path (str): Path to the Fail2Ban log file.
-            output_file (None | str): Optional path to the output file.
+            log_path: Path to the fail2ban log file.
+            output_file: Path to the output file where banned IPs will be written.
 
         """
-        self.log_path = Path(log_path)
-        self.output_filename = None if output_file is None else Path(output_file)
-        self.today = datetime.now(UTC).strftime("%Y-%m-%d")
-        self._ips: list[str] = []
+        self.log_path = log_path
+        self.output_file = output_file
+        self.pattern = re.compile(r"Ban (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})")
 
-    def read_logs(self) -> list[str]:
-        """Read the Fail2Ban log file and extract banned IP addresses for today.
+    def read_logs(self) -> set[str]:
+        """Read logs from the specified file path and extract banned IP addresses.
 
         Returns:
-            set[str]: A set of banned IP addresses found in today's log entries.
-
-        Raises:
-            FileNotFoundError: If the specified log file does not exist.
+            Set of banned IP addresses.
 
         """
-        if not self.log_path.exists():
-            msg = "File: %s does not exist", self.log_path.as_posix()
-            raise FileNotFoundError(msg)
-        self._ips.clear()  # To avoid overlapping of IPs the list is cleared before putting in the new IPs. This script is intended to be run once a day.
-        with Path(self.log_path).open("r") as file:
-            for line in file:
-                if "Ban " in line and self.today in line:
-                    ip = line.strip().split()[-1]
-                    self._ips.append(ip)
-        return self._ips
+        banned_ips = set()
+        if not self.log_path:
+            return banned_ips
+        if not Path(self.log_path).exists():
+            return banned_ips
+        try:
+            with Path(self.log_path).open() as log_file:
+                content = log_file.read()
+                matches = self.pattern.findall(content)
+                for ip in matches:
+                    banned_ips.add(ip)
+                if not banned_ips:
+                    pass
 
-    @property
-    def ips(self) -> list[str]:
-        """Get the set of banned IP addresses extracted from the log file."""
-        return self._ips
-
-    def export_results(self) -> None:
-        """Export the set of banned IP addresses to the specified output file.
-
-        Raises:
-            Exception: If the output file path is not specified.
-
-        """
-        if self.output_filename is None:
-            msg = "File: %s does not exist", self.log_path.as_posix()
-            raise Exception(msg)
-        with Path(self.output_filename).open("w") as file:
-            for ip in sorted(self._ips):
-                file.write(ip + "\n")
+            if self.output_file and banned_ips:
+                with Path(self.output_file).open("w") as out_file:
+                    for ip in banned_ips:
+                        out_file.write(f"{ip}\n")
+        except Exception as e:
+            return banned_ips
+        else:
+            return banned_ips

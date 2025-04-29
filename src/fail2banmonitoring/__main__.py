@@ -21,8 +21,6 @@ async def main() -> None:
             output_file=environment_variables.export_ip_path,
         )
         local_ips = fail2ban_log_parser.read_logs()
-        if environment_variables.export_ip_path is not None:
-            fail2ban_log_parser.export_results()
 
         enriched_ips = None
         async with aiohttp.ClientSession() as session:
@@ -31,13 +29,13 @@ async def main() -> None:
             elif len(local_ips) == 1:
                 enriched_ips = [
                     await IPMetadata.get_ip_metadata(
-                        local_ips[0],
+                        next(iter(local_ips)),
                         session,
                     ),
                 ]
             else:
                 enriched_ips = await IPMetadata.get_ips_metadata_batch(
-                    local_ips,
+                    list(local_ips),
                     session,
                 )
         if enriched_ips is not None:

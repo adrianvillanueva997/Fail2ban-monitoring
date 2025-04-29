@@ -13,7 +13,7 @@ class EnvironmentVariables:
         "username": ("USERNAME", True),
         "password": ("PASSWORD", True),
         "database": ("DATABASE", True),
-        "log_path": ("LOG_PATH", False),
+        "log_path": ("LOG_PATH", True),  # Changed to required
         "export_ip_path": ("EXPORT_IP_PATH", False),
     }
 
@@ -39,6 +39,8 @@ class EnvironmentVariables:
         if required and value is None:
             msg = f"Missing required environment variable: {env_name}"
             raise OSError(msg)
+
+        # Debug print for environment variable access
 
         return value
 
@@ -69,9 +71,9 @@ class EnvironmentVariables:
         return self._get_env_var("database") or ""
 
     @cached_property
-    def log_path(self) -> str | None:
-        """Return the value of the LOG_PATH environment variable, or None if not set."""
-        return self._get_env_var("log_path")
+    def log_path(self) -> str:
+        """Return the value of the LOG_PATH environment variable."""
+        return self._get_env_var("log_path") or ""
 
     @cached_property
     def export_ip_path(self) -> str | None:
