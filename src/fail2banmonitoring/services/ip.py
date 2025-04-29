@@ -17,7 +17,6 @@ class _IPAPIRules(Enum):
 
 
 class IPMetadata(BaseModel):
-
     """Represents metadata information for an IP address as returned by ip-api.com.
 
     Attributes:

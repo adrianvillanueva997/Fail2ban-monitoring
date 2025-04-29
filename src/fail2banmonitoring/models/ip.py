@@ -71,6 +71,7 @@ class IpModel(_Base):
     isp: Mapped[str] = mapped_column(String(50))
     org: MappedColumn[str] = mapped_column(String(50))
     _as: Mapped[str] = mapped_column(String(50), name="as")
+    query: Mapped[str] = mapped_column(String(50), name="ip_address")
 
     @classmethod
     def from_metadata(cls, ip_metadata: IPMetadata) -> Self:
