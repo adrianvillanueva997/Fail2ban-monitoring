@@ -2,6 +2,8 @@
 
 A monitoring solution for Fail2ban that helps track and analyze blocked IPs across your infrastructure.
 
+![Dashboard example](https://raw.githubusercontent.com/adrianvillanueva997/Fail2ban-monitoring/master/dashboard.png)
+
 ## Features
 
 - Track Fail2ban blocks across multiple servers
