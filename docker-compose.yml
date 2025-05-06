@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: fail2ban-monitoring
+    restart: unless-stopped
+    environment:
+      - DB_TYPE=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=fail2ban
+      - DB_PASSWORD=fail2banpassword
+      - DB_NAME=fail2ban
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15
+    container_name: fail2ban-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=fail2ban
+      - POSTGRES_PASSWORD=fail2banpassword
+      - POSTGRES_DB=fail2ban
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Uncomment to use MariaDB instead
+  # mariadb:
+  #   image: mariadb:10.6
+  #   container_name: fail2ban-mariadb
+  #   restart: unless-stopped
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=root
+  #     - MYSQL_DATABASE=fail2ban
+  #     - MYSQL_USER=fail2ban
+  #     - MYSQL_PASSWORD=fail2banpassword
+  #   volumes:
+  #     - mariadb_data:/var/lib/mysql
+
+volumes:
+  postgres_data:
+  # mariadb_data:

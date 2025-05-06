@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install uv package manager
+RUN pip install --no-cache-dir uv
+
+# Copy project files
+COPY . .
+
+# Install project dependencies with MySQL extras
+RUN uv pip install -e ".[mysql]"
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV DB_TYPE=mariadb
+ENV DB_HOST=mariadb
+ENV DB_PORT=3306
+ENV DB_USER=fail2ban
+ENV DB_PASSWORD=fail2banpassword
+ENV DB_NAME=fail2ban
+
+# Command to run when container starts
+CMD ["python", "-m", "src.main"]

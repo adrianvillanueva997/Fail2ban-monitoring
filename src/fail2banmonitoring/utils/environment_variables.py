@@ -13,9 +13,9 @@ class EnvironmentVariables:
         "username": ("USERNAME", True),
         "password": ("PASSWORD", True),
         "database": ("DATABASE", True),
+        "port": ("PORT", False),
         "log_path": ("LOG_PATH", True),  # Changed to required
         "export_ip_path": ("EXPORT_IP_PATH", False),
-        "port": ("PORT", False),
     }
 
     def __init_subclass__(cls) -> None:

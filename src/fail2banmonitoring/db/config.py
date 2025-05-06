@@ -58,23 +58,6 @@ class SqlConnectorConfig:
         """Return the string representation of the SQLAlchemy URL object."""
         return str(self.url)
 
-    # def __post_init__(self) -> None:
-    #     """Validate the drivername to ensure it is an accepted async driver."""
-    #     valid_async_drivers = {
-    #         "postgresql+asyncpg",
-    #         "mysql+aiomysql",
-    #         "mysql+asyncmy",
-    #         "sqlite+aiosqlite",
-    #     }
-    #     if self.drivername not in valid_async_drivers:
-    #         msg = (
-    #             f"Invalid or unsupported async driver '{self.drivername}'. "
-    #             f"Supported drivers: {', '.join(valid_async_drivers)}."
-    #         )
-    #         raise ValueError(
-    #             msg,
-    #         )
-
 
 @dataclass
 class SqlEngine:
