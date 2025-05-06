@@ -26,6 +26,8 @@ cd Fail2ban-monitoring
 
 # Install dependencies
 uv sync --extra (sqlite/mysql/postgres)
+# After setting up the environment variables (check below table) run the following command:
+uv run src/fail2banmonitoring
 ```
 
 ## Environment Variables
