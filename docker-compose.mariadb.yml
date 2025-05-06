@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: mariadb
+    container_name: fail2ban-monitoring-mariadb
+    restart: unless-stopped
+    environment:
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_USER=fail2ban
+      - DB_PASSWORD=fail2banpassword
+      - DB_NAME=fail2ban
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      - mariadb
+
+  mariadb:
+    image: mariadb:10.6
+    container_name: fail2ban-mariadb
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=fail2ban
+      - MYSQL_USER=fail2ban
+      - MYSQL_PASSWORD=fail2banpassword
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+volumes:
+  mariadb_data:

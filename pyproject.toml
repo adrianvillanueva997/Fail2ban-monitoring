@@ -1,22 +1,33 @@
-[tool.poetry]
-name = "fail2ban-monitoring"
+[project]
+name = "fail2banmonitoring"
 version = "0.1.0"
-description = ""
-authors = ["adrianvillanueva997"]
-
-[tool.poetry.dependencies]
-python = "3.9"
-requests = "^2.31.0"
-SQLAlchemy = "^1.4.31"
-python-dotenv = "^0.19.2"
-numpy = "^1.22.2"
-mysqlclient = "^2.1.0"
-
-[tool.poetry.dev-dependencies]
-black = "^22.1.0"
-pylama = "^8.3.7"
-pylint = "^2.12.2"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiohttp[speedups]>=3.11.16",
+    "pydantic>=2.11.3",
+    "sqlalchemy[asyncio]>=2.0.40",
+    "tenacity>=9.1.2",
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "anyio>=4.9.0",
+    "bandit>=1.8.3",
+    "mypy>=1.15.0",
+    "psycopg2-binary>=2.9.10",
+    "pymysql>=1.1.1",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0",
+    "ruff>=0.11.5",
+]
+
+[project.optional-dependencies]
+postgres = ["asyncpg>=0.30.0"]
+mysql = ["aiomysql>=0.2.0", "cryptography>=44.0.2"]
+sqlite = ["aiosqlite>=0.21.0"]
