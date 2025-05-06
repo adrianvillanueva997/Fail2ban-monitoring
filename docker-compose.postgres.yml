@@ -4,7 +4,8 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile.postgres
+      dockerfile: Dockerfile
+      target: postgres
     container_name: fail2ban-monitoring-postgres
     restart: unless-stopped
     environment:

@@ -4,7 +4,8 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile.mariadb
+      dockerfile: Dockerfile
+      target: mariadb
     container_name: fail2ban-monitoring-mariadb
     restart: unless-stopped
     environment:

@@ -4,12 +4,14 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile.sqlite
+      dockerfile: Dockerfile
+      target: sqlite
     container_name: fail2ban-monitoring-sqlite
     restart: unless-stopped
     volumes:
       - ./config:/app/config
       - ./data:/app/data
+      # - Link the logs file here
 
 volumes:
   data:

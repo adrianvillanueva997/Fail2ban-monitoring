@@ -66,11 +66,11 @@ class Fail2BanLogParser:
             logger.exception("Permission denied when reading log file")
             raise
         except UnicodeDecodeError as e:
-            logger.exception("Error decoding log file: %s", e)
+            logger.exception("Error decoding log file")
             msg = f"Could not decode log file: {e}"
             raise ValueError(msg)
         except Exception as e:
-            logger.exception("Unexpected error reading log file: %s", e)
+            logger.exception("Unexpected error reading log file")
             raise
         else:
             return banned_ips
