@@ -1,4 +1,4 @@
-FROM python:3.13-slim-bookworm AS BASE
+FROM python:3.13-slim-bookworm AS base
 
 WORKDIR /app
 
@@ -15,18 +15,18 @@ ENV PYTHONUNBUFFERED=1
 CMD ["python", "-m", "src.main"]
 
 # SQLite variant
-FROM BASE AS sqlite
+FROM base AS sqlite
 RUN uv sync --extra "sqlite"
 ENV DB_TYPE=sqlite
 ENV DB_NAME=/app/data/fail2ban.db
 RUN mkdir -p /app/data
 
 # PostgreSQL variant
-FROM BASE AS postgres
+FROM base AS postgres
 RUN uv sync --extra "postgres"
 ENV DB_TYPE=postgres
 
 # MariaDB variant
-FROM BASE AS mariadb
+FROM base AS mariadb
 RUN uv sync --extra "mysql"
 ENV DB_TYPE=mariadb
