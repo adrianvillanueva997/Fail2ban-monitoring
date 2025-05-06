@@ -71,7 +71,6 @@ jobs:
 
   docker-build:
     runs-on: ubuntu-24.04
-    needs: [test-postgres, test-sqlite, lint]
     strategy:
       matrix:
         db-type: [sqlite, postgres, mariadb]
@@ -83,7 +82,7 @@ jobs:
         uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
         with:
           context: .
-          file: ./dockerfiles/Dockerfile
+          file: Dockerfile
           target: ${{ matrix.db-type }}
           push: false
           tags: fail2ban-monitoring:${{ matrix.db-type }}
